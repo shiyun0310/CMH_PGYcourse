@@ -5,20 +5,31 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PGY 訓練課程表</title>
 <meta name="description" content="PGY 畢業後一般醫學訓練年度輪訓課程表，資料以 Google Sheets 為主。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
 <!-- ?v= 是版本參數：改過 assets/ 裡的檔案就把這串一起改掉，
      瀏覽器才不會沿用舊快取。頁尾會顯示目前載入的版本。 -->
-<link rel="stylesheet" href="assets/style.css?v=2026-09-07.15">
+<link rel="stylesheet" href="assets/style.css?v=2026-09-07.16">
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <div class="mark">PGY</div>
+      <svg class="mark" viewBox="0 0 48 44" role="img" aria-label="PGY">
+        <defs>
+          <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFFFFF"/>
+            <stop offset="1" stop-color="#FFD9E4"/>
+          </linearGradient>
+        </defs>
+        <path d="M24 41.5C24 41.5 3.5 28.2 3.5 15.2 3.5 8.2 9 3.5 14.9 3.5c4 0 7.3 2.2 9.1 5.2 1.8-3 5.1-5.2 9.1-5.2 5.9 0 11.4 4.7 11.4 11.7 0 13-20.5 26.3-20.5 26.3Z"
+              fill="url(#hg)"/>
+        <text x="24" y="22" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif"
+              font-size="12" font-weight="800" letter-spacing="-.3" fill="#A83459">PGY</text>
+      </svg>
       <div>
         <h1 id="title">PGY 訓練課程表</h1>
-        <p id="subtitle">畢業後一般醫學訓練　年度輪訓月曆</p>
+        <p id="subtitle">畢業後一般醫學訓練</p>
       </div>
     </div>
     <div class="top-actions">
@@ -81,8 +92,8 @@
   <p class="foot">PGY 訓練課程表 · 前端以 Google Sheets 為單一資料來源<span id="build"></span></p>
 </main>
 
-<script src="assets/config.js?v=2026-09-07.15"></script>
-<script src="assets/sample-data.js?v=2026-09-07.15"></script>
-<script src="assets/app.js?v=2026-09-07.15"></script>
+<script src="assets/config.js?v=2026-09-07.16"></script>
+<script src="assets/sample-data.js?v=2026-09-07.16"></script>
+<script src="assets/app.js?v=2026-09-07.16"></script>
 </body>
 </html>
