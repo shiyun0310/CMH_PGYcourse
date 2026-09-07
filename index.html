@@ -6,7 +6,9 @@
 <title>PGY 訓練課程表</title>
 <meta name="description" content="PGY 畢業後一般醫學訓練年度輪訓課程表，資料以 Google Sheets 為主。">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
-<link rel="stylesheet" href="assets/style.css">
+<!-- ?v= 是版本參數：改過 assets/ 裡的檔案就把這串一起改掉，
+     瀏覽器才不會沿用舊快取。頁尾會顯示目前載入的版本。 -->
+<link rel="stylesheet" href="assets/style.css?v=2026-09-07.10">
 </head>
 <body>
 
@@ -96,11 +98,11 @@
     <code>選-眼科</code> 與 <code>選-耳鼻喉</code>、<code>社-新樓</code> 與 <code>社-佳里</code> 維持分開。
   </div>
 
-  <p class="foot">PGY 訓練課程表 · 前端以 Google Sheets 為單一資料來源</p>
+  <p class="foot">PGY 訓練課程表 · 前端以 Google Sheets 為單一資料來源<span id="build"></span></p>
 </main>
 
-<script src="assets/config.js"></script>
-<script src="assets/sample-data.js"></script>
-<script src="assets/app.js"></script>
+<script src="assets/config.js?v=2026-09-07.10"></script>
+<script src="assets/sample-data.js?v=2026-09-07.10"></script>
+<script src="assets/app.js?v=2026-09-07.10"></script>
 </body>
 </html>

@@ -448,7 +448,7 @@
       }).forEach(function (it) {
         // 原始寫法與分組名不同時（例：內(Y2不分) 併進「內」），把註記顯示出來
         var note = it.value === k ? '' : '<i class="vtag">' + esc(it.value) + '</i>';
-        h += '<li><i class="pid">' + esc(it.row['人事號']) + '</i>' +
+        h += '<li><i class="pid">' + esc(it.row['人事號'] || '—') + '</i>' +
           '<b>' + esc(it.row['受訓醫師']) + '</b>' + note +
           '<span>' + esc([it.row['期程'], it.row['簡碼']].filter(Boolean).join('・')) + '</span></li>';
       });
@@ -755,6 +755,11 @@
       var t = localStorage.getItem('pgy-theme');
       if (t) document.documentElement.setAttribute('data-theme', t);
     } catch (e) {}
+
+    // 從自己的 script src 取出 ?v=，顯示在頁尾；版本只維護 index.html 一處
+    var me = document.querySelector('script[src*="app.js"]');
+    var ver = me && (me.getAttribute('src').split('v=')[1] || '');
+    if (ver) $('#build').textContent = '　·　版本 ' + ver;
 
     $('#title').textContent = CFG.TITLE || 'PGY 訓練課程表';
     $('#subtitle').textContent = CFG.SUBTITLE || '';
