@@ -80,6 +80,30 @@
     return catColor(categoryOf(v));
   }
 
+  /* 去掉括號註記，取出「訓練單位」本體
+   *   內(Y2不分)、內(Y2內)、內  → 內
+   *   婦(完訓)、婦(Y2婦)、婦     → 婦
+   *   選-眼科                   → 選-眼科（連字號後面是實際去的單位，保留）
+   *   社-新樓                   → 社-新樓 */
+  function baseUnit(v) {
+    var s = String(v == null ? '' : v).trim();
+    var cut = s.search(/[（(]/);
+    if (cut < 0) return s;
+    var base = s.slice(0, cut).trim();
+    return base || s;               // 整串都是括號時，保留原文
+  }
+
+  /* 月份檢視 / 統計的分組鍵
+   *   MONTH_GROUP_BY = 'unit'（預設）依訓練單位，選-眼科 與 選-耳鼻喉 分開
+   *   MONTH_GROUP_BY = 'category'    依科別，所有 選- 併成一組「選修」 */
+  function groupKeyOf(cell) {
+    return CFG.MONTH_GROUP_BY === 'category' ? cell.cat : baseUnit(cell.value);
+  }
+
+  function groupColor(key) {
+    return CFG.MONTH_GROUP_BY === 'category' ? catColor(key) : valueColor(key);
+  }
+
   function colorOf(cell) {
     if (CFG.COLOR_SOURCE === 'sheets' &&
         cell && cell.color && /^#[0-9a-f]{6}$/i.test(cell.color)) return cell.color;
@@ -366,7 +390,8 @@
       var c = r.months[m.key];
       if (!c) return;
       if (anyCatSelected() && !state.filters.cats[c.cat]) return;
-      (buckets[c.value] = buckets[c.value] || []).push(r);
+      var k = groupKeyOf(c);
+      (buckets[k] = buckets[k] || []).push({ row: r, value: c.value });
     });
 
     var keys = Object.keys(buckets).sort(function (a, b) {
@@ -386,21 +411,25 @@
     var assigned = keys.reduce(function (s, k) { return s + buckets[k].length; }, 0);
 
     var h = '<div class="view-head"><div><h2>' + esc(m.label) + ' 輪訓分布</h2>' +
-      '<div class="sub">' + keys.length + ' 個訓練單位 ／ ' + assigned + ' 位受訓醫師已排定（篩選後共 ' + rows.length + ' 位）</div></div>' +
+      '<div class="sub">' + keys.length + (CFG.MONTH_GROUP_BY === 'category' ? ' 個科別' : ' 個訓練單位') +
+      ' ／ ' + assigned + ' 位受訓醫師已排定（篩選後共 ' + rows.length + ' 位）</div></div>' +
       nav + '</div>';
 
     if (!keys.length) return h + emptyState('本月沒有符合條件的排課');
 
     h += '<div class="mgrid">';
     keys.forEach(function (k) {
-      var col = colorOf(buckets[k][0].months[m.key]), fg = inkOn(col);
+      var col = groupColor(k), fg = inkOn(col);
       h += '<div class="mcard"><h3 style="background:' + col + ';color:' + fg + '">' +
         '<span>' + esc(k) + '</span><span class="count-badge">' + buckets[k].length + ' 人</span></h3><ul>';
-      buckets[k].sort(function (a, b) { return String(a['受訓醫師']).localeCompare(String(b['受訓醫師']), 'zh-Hant'); })
-        .forEach(function (r) {
-          h += '<li><b>' + esc(r['受訓醫師']) + '</b>' +
-            '<span>' + esc([r['期程'], r['簡碼']].filter(Boolean).join('・')) + '</span></li>';
-        });
+      buckets[k].sort(function (a, b) {
+        return String(a.row['受訓醫師']).localeCompare(String(b.row['受訓醫師']), 'zh-Hant');
+      }).forEach(function (it) {
+        // 原始寫法與分組名不同時（例：內(Y2不分) 併進「內」），把註記顯示出來
+        var note = it.value === k ? '' : '<i class="vtag">' + esc(it.value) + '</i>';
+        h += '<li><b>' + esc(it.row['受訓醫師']) + '</b>' + note +
+          '<span>' + esc([it.row['期程'], it.row['簡碼']].filter(Boolean).join('・')) + '</span></li>';
+      });
       h += '</ul></div>';
     });
     h += '</div>';
@@ -473,7 +502,8 @@
         if (!c) return;
         slots++;
         catTotal[c.cat] = (catTotal[c.cat] || 0) + 1;
-        unitTotal[c.value] = (unitTotal[c.value] || 0) + 1;
+        var uk = groupKeyOf(c);
+        unitTotal[uk] = (unitTotal[uk] || 0) + 1;
         (byMonth[m.key] = byMonth[m.key] || {})[c.cat] = (byMonth[m.key][c.cat] || 0) + 1;
       });
     });
@@ -521,9 +551,10 @@
 
     var unitKeys = Object.keys(unitTotal).sort(function (a, b) { return unitTotal[b] - unitTotal[a]; });
     var maxUnit = unitKeys.length ? unitTotal[unitKeys[0]] : 1;
-    h += '<h3 class="sec">各訓練單位人月數</h3><div class="bars">';
+    h += '<h3 class="sec">' + (CFG.MONTH_GROUP_BY === 'category' ? '各科別人月數（同上）' : '各訓練單位人月數') +
+      '</h3><div class="bars">';
     unitKeys.forEach(function (k) {
-      var col = valueColor(k);
+      var col = groupColor(k);
       h += '<div class="bar"><span class="bt">' + esc(k) + '</span>' +
         '<span class="bw"><i class="bf" style="width:' + (unitTotal[k] / maxUnit * 100) + '%;background:' + col + '"></i></span>' +
         '<span class="bn">' + unitTotal[k] + ' 人月</span></div>';
