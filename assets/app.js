@@ -30,27 +30,40 @@
     });
   }
 
-  /* 依背景色決定文字用黑或白，確保對比 */
-  function inkOn(hex) {
+  var INK_DARK = '#1b2432', INK_LIGHT = '#ffffff';
+
+  /* 相對亮度（WCAG） */
+  function luminance(hex) {
     var h = String(hex || '').replace('#', '');
     if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
-    if (h.length !== 6) return '#1b2432';
+    if (h.length !== 6) return null;
     var f = function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
-    var L = 0.2126 * f(parseInt(h.slice(0, 2), 16)) +
-            0.7152 * f(parseInt(h.slice(2, 4), 16)) +
-            0.0722 * f(parseInt(h.slice(4, 6), 16));
-    return L > 0.42 ? '#1b2432' : '#ffffff';
+    return 0.2126 * f(parseInt(h.slice(0, 2), 16)) +
+           0.7152 * f(parseInt(h.slice(2, 4), 16)) +
+           0.0722 * f(parseInt(h.slice(4, 6), 16));
   }
 
-  /* 值 → 科別分類 */
+  function contrast(l1, l2) {
+    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+  }
+
+  /* 依背景色挑深色或白色文字 —— 實際比較兩者的對比度，取高的那個。
+   * （固定門檻會在中間色調挑錯，例如 #00B0F0 配白字只有 2.5:1） */
+  function inkOn(hex) {
+    var L = luminance(hex);
+    if (L == null) return INK_DARK;
+    return contrast(L, luminance(INK_DARK)) >= contrast(L, luminance(INK_LIGHT)) ? INK_DARK : INK_LIGHT;
+  }
+
+  /* 值 → 科別分類：只看開頭，都不符合就歸 DEFAULT_CATEGORY */
   function categoryOf(v) {
     var s = String(v || '').trim();
-    if (!s) return '';
+    if (!s) return '';                       // 空白格＝沒有排課，不算任何科別
     var rules = CFG.CATEGORY_RULES || [];
     for (var i = 0; i < rules.length; i++) {
       if (s.indexOf(rules[i].prefix) === 0) return rules[i].name;
     }
-    return '其他';
+    return CFG.DEFAULT_CATEGORY || '其他';
   }
 
   /* 儲存格顏色
@@ -59,7 +72,7 @@
   /* 科別名 → 顏色（例：'內科'） */
   function catColor(cat) {
     var map = CFG.CATEGORY_COLORS || {};
-    return map[cat] || map['其他'] || '#d9d9d9';
+    return map[cat] || map[CFG.DEFAULT_CATEGORY] || '#d9d9d9';
   }
 
   /* 原始值 → 顏色（例：'內(Y2不分)' → 內科的黃色） */
