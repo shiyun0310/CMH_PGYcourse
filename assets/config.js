@@ -10,7 +10,7 @@ window.PGY_CONFIG = {
    *    格式：https://script.google.com/macros/s/AKfycb.../exec
    *    留空字串 = 使用 assets/sample-data.js 的離線範例資料。
    * ------------------------------------------------------------------ */
-  GAS_WEB_APP_URL: '',
+  GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbwP08wG81orF4itPVpavCXh_ZyMghU1ZUXbWFma8ySCJrQBTWJKH6QxcykvJjps3xJhPA/exec',
 
   /* 預設要載入的工作表名稱（留空 = 用試算表的第一個工作表） */
   DEFAULT_SHEET: '',

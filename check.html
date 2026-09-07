@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GAS 連線檢測 · PGY 訓練課程表</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+<link rel="stylesheet" href="assets/style.css">
+<style>
+  .case{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden;background:var(--panel-2)}
+  .case>h3{margin:0;padding:10px 14px;font-size:13.5px;display:flex;align-items:center;gap:9px;
+           border-bottom:1px solid var(--line);background:var(--panel)}
+  .case .tag{margin-left:auto;font-size:12px;font-weight:800;padding:2px 10px;border-radius:999px}
+  .tag.run{background:#e6f1f8;color:#0f5c8c}
+  .tag.ok{background:#e3f5ec;color:#1c7a4f}
+  .tag.bad{background:#fdecea;color:#b3261e}
+  [data-theme="dark"] .tag.run{background:#1d2c3a;color:#8dc9ec}
+  [data-theme="dark"] .tag.ok{background:#16301f;color:#5fce9c}
+  [data-theme="dark"] .tag.bad{background:#2e1a18;color:#f0857c}
+  .case pre{margin:0;padding:12px 14px;font-family:var(--mono);font-size:12px;line-height:1.65;
+            white-space:pre-wrap;word-break:break-all;color:var(--ink-2);max-height:280px;overflow:auto}
+  .url{font-family:var(--mono);font-size:12px;word-break:break-all;color:var(--brand)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">PGY</div>
+      <div><h1>GAS 連線檢測</h1><p>確認 Apps Script 網頁應用程式是否正常回應</p></div>
+    </div>
+    <div class="top-actions">
+      <a class="btn ghost" href="index.html">← 回課程表</a>
+      <button class="btn ghost" id="again">↻ 重新檢測</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="note" style="margin-top:18px">
+    檢測對象（來自 <code>assets/config.js</code>）：<br><span class="url" id="target"></span>
+  </div>
+  <div id="out" style="margin-top:16px"></div>
+  <div class="note" id="verdict" style="display:none"></div>
+  <p class="foot">此頁只做連線診斷，不會寫入任何資料。</p>
+</main>
+
+<script src="assets/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  var CFG = window.PGY_CONFIG || {};
+  var BASE = (CFG.GAS_WEB_APP_URL || '').trim();
+  var out = document.getElementById('out');
+
+  function esc(s){return String(s==null?'':s).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+
+  function card(title) {
+    var el = document.createElement('div');
+    el.className = 'case';
+    el.innerHTML = '<h3><span>' + esc(title) + '</span><span class="tag run">檢測中…</span></h3><pre>…</pre>';
+    out.appendChild(el);
+    return {
+      done: function (ok, text) {
+        var t = el.querySelector('.tag');
+        t.className = 'tag ' + (ok ? 'ok' : 'bad');
+        t.textContent = ok ? '通過' : '失敗';
+        el.querySelector('pre').textContent = text;
+        return ok;
+      }
+    };
+  }
+
+  function url(params) {
+    var qs = Object.keys(params).map(function (k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    }).join('&');
+    return BASE + (BASE.indexOf('?') < 0 ? '?' : '&') + qs;
+  }
+
+  function jsonp(u, ms) {
+    return new Promise(function (res, rej) {
+      var cb = 'chk_' + Math.random().toString(36).slice(2);
+      var sc = document.createElement('script');
+      var timer = setTimeout(function () { clean(); rej(new Error('逾時（' + (ms / 1000) + ' 秒沒有回應）')); }, ms);
+      function clean() { clearTimeout(timer); delete window[cb]; if (sc.parentNode) sc.parentNode.removeChild(sc); }
+      window[cb] = function (d) { clean(); res(d); };
+      sc.onerror = function () { clean(); rej(new Error('載入失敗（網址錯誤，或部署的存取權不是「任何人」）')); };
+      sc.src = u + '&callback=' + cb;
+      document.body.appendChild(sc);
+    });
+  }
+
+  function preview(o) { return JSON.stringify(o, null, 2).slice(0, 1500); }
+
+  function run() {
+    out.innerHTML = '';
+    document.getElementById('verdict').style.display = 'none';
+    document.getElementById('target').textContent = BASE || '（尚未設定 GAS_WEB_APP_URL）';
+    if (!BASE) {
+      card('設定檢查').done(false, 'assets/config.js 的 GAS_WEB_APP_URL 還是空的。');
+      return;
+    }
+
+    var results = {};
+
+    // 1. fetch + CORS
+    var c1 = card('1. fetch 直接讀取（測 CORS）');
+    var p1 = fetch(url({ action: 'ping', t: Date.now() }), { redirect: 'follow' })
+      .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function (txt) {
+        var d;
+        try { d = JSON.parse(txt); }
+        catch (e) { throw new Error('回應不是 JSON，可能是 Google 登入頁。開頭：\n' + txt.slice(0, 200)); }
+        if (!d.ok) throw new Error('後端回報錯誤：' + d.error);
+        results.fetch = true;
+        return c1.done(true, preview(d));
+      })
+      .catch(function (e) {
+        results.fetch = false;
+        return c1.done(false, e.message + '\n\n（若這一項失敗但下面 JSONP 通過，網頁仍可正常運作 — 程式會自動改走 JSONP。）');
+      });
+
+    // 2. JSONP
+    var c2 = card('2. JSONP 讀取（CORS 被擋時的備援）');
+    var p2 = jsonp(url({ action: 'ping', t: Date.now() }), 25000)
+      .then(function (d) {
+        if (!d.ok) throw new Error('後端回報錯誤：' + d.error);
+        results.jsonp = true;
+        return c2.done(true, preview(d));
+      })
+      .catch(function (e) { results.jsonp = false; return c2.done(false, e.message); });
+
+    // 3+4. 讀工作表與課表（用可行的傳輸方式）
+    Promise.all([p1, p2]).then(function () {
+      var get = results.fetch
+        ? function (p) { return fetch(url(p)).then(function (r) { return r.json(); }); }
+        : function (p) { return jsonp(url(p), 25000); };
+
+      if (!results.fetch && !results.jsonp) {
+        card('3. 讀取工作表清單').done(false, '前兩項都失敗，略過。');
+        return verdict(results);
+      }
+
+      var c3 = card('3. 讀取工作表清單（action=sheets）');
+      return get({ action: 'sheets', t: Date.now() })
+        .then(function (d) {
+          if (!d.ok) throw new Error(d.error);
+          c3.done(true, '找到 ' + (d.sheets || []).length + ' 個工作表：\n' + (d.sheets || []).join('\n'));
+          var c4 = card('4. 讀取課表（action=schedule）');
+          return get({ action: 'schedule', t: Date.now() }).then(function (s) {
+            if (!s.ok) throw new Error(s.error);
+            var m = (s.monthCols || []).map(function (x) { return x.label; });
+            var r0 = (s.rows || [])[0];
+            c4.done(true,
+              '工作表：' + s.sheet +
+              '\n受訓醫師：' + (s.rows || []).length + ' 位' +
+              '\n月份欄：' + m.length + ' 欄　' + (m[0] || '') + ' … ' + (m[m.length - 1] || '') +
+              '\n更新時間：' + s.updatedAt +
+              '\n\n第一列資料：\n' + (r0 ? preview(r0) : '（沒有資料列）'));
+            results.rows = (s.rows || []).length;
+            results.months = m.length;
+            verdict(results);
+          });
+        })
+        .catch(function (e) { c3.done(false, e.message); verdict(results); });
+    });
+  }
+
+  function verdict(r) {
+    var v = document.getElementById('verdict');
+    v.style.display = '';
+    if (r.fetch || r.jsonp) {
+      v.innerHTML = '<b>結果：連線正常。</b>　讀到 ' + (r.rows != null ? r.rows + ' 位受訓醫師、' + r.months + ' 個月份欄。' : '') +
+        '　可以直接開 <a href="index.html">課程表</a> 了。' +
+        (r.fetch ? '' : '　（fetch 被 CORS 擋住，走 JSONP 備援，屬正常情形。）');
+    } else {
+      v.innerHTML = '<b>結果：連不上。</b>　依序檢查：' +
+        '<br>1. 網址結尾是 <code>/exec</code>，不是 <code>/dev</code>' +
+        '<br>2. 部署時「誰可以存取」要選<b>任何人</b>；選「僅限自己」或「機構內」時，未登入的瀏覽器會被導到 Google 登入頁' +
+        '<br>3. 第一次部署要完成授權流程（進階 → 前往…→ 允許）' +
+        '<br>4. 改過 Code.gs 之後，要用「管理部署作業 → 編輯 → 版本：新版本」重新部署，網址才會指到新程式碼';
+    }
+  }
+
+  document.getElementById('again').addEventListener('click', run);
+  try { var t = localStorage.getItem('pgy-theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+  run();
+})();
+</script>
+</body>
+</html>
