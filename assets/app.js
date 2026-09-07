@@ -17,7 +17,7 @@
     monthIndex: 0,
     filters: { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' },   // cat 為單選，'' = 全部
     hideEmptyMonths: true,
-    focusPerson: ''
+    personQuery: ''      // 個人時程要先輸入姓名或人事號才顯示
   };
 
   /* ---------------------------------------------------------------- 工具 */
@@ -470,17 +470,33 @@
 
   /* ------------------------------------------------------- 檢視：個人 */
   function viewPerson() {
-    var d = state.data, months = activeMonths();
-    var rows = filteredRows();
-    if (state.focusPerson) {
-      rows = rows.filter(function (r) { return r['受訓醫師'] === state.focusPerson; });
+    var months = activeMonths();
+    var q = String(state.personQuery || '').trim();
+
+    var box = '<div class="view-head"><div><h2>個人輪訓時程</h2>' +
+      '<div class="sub">輸入姓名或人事號查詢單一受訓醫師</div></div>' +
+      '<div class="pfind">' +
+      '<input id="p-q" type="search" placeholder="姓名或人事號…" autocomplete="off" value="' + esc(q) + '">' +
+      (q ? '<button class="btn" id="p-clear">清除</button>' : '') +
+      '</div></div>';
+
+    if (!q) {
+      return box + '<div class="empty-state"><div class="big">🔎</div>' +
+        '<div>請先輸入<b>姓名</b>或<b>人事號</b></div>' +
+        '<div style="margin-top:6px;font-size:12.5px">也可以在「總覽表」直接點受訓醫師的姓名</div></div>';
     }
-    if (!rows.length) return emptyState('沒有符合條件的受訓醫師');
 
-    var h = '<div class="view-head"><div><h2>個人輪訓時程</h2>' +
-      '<div class="sub">共 ' + rows.length + ' 位' + (state.focusPerson ? '（已鎖定 ' + esc(state.focusPerson) + '）' : '') + '</div></div>' +
-      (state.focusPerson ? '<button class="btn" id="p-clear">顯示全部</button>' : '') + '</div><div class="plist">';
+    var needle = q.toLowerCase();
+    var rows = filteredRows().filter(function (r) {
+      return String(r['受訓醫師']).toLowerCase().indexOf(needle) >= 0 ||
+             String(r['人事號']).toLowerCase().indexOf(needle) >= 0;
+    });
 
+    if (!rows.length) {
+      return box + emptyState('找不到「' + q + '」，請確認姓名或人事號', '🔎');
+    }
+
+    var h = box + '<div class="plist">';
     rows.forEach(function (r) {
       var tally = {};
       months.forEach(function (m) {
@@ -523,89 +539,9 @@
     return h + '</div>';
   }
 
-  /* ------------------------------------------------------- 檢視：統計 */
-  function viewStats() {
-    var months = activeMonths(), rows = filteredRows();
-    if (!rows.length) return emptyState('沒有符合條件的資料');
-
-    var catTotal = {}, byMonth = {}, unitTotal = {}, slots = 0;
-    rows.forEach(function (r) {
-      months.forEach(function (m) {
-        var c = r.months[m.key];
-        if (!c) return;
-        slots++;
-        catTotal[c.cat] = (catTotal[c.cat] || 0) + 1;
-        var uk = groupKeyOf(c);
-        unitTotal[uk] = (unitTotal[uk] || 0) + 1;
-        (byMonth[m.key] = byMonth[m.key] || {})[c.cat] = (byMonth[m.key][c.cat] || 0) + 1;
-      });
-    });
-
-    var capacity = rows.length * months.length;
-    var catKeys = Object.keys(catTotal).sort(function (a, b) { return catTotal[b] - catTotal[a]; });
-    var maxCat = catKeys.length ? catTotal[catKeys[0]] : 1;
-
-    var h = '<div class="view-head"><div><h2>統計總覽</h2><div class="sub">依目前篩選條件計算</div></div></div><div class="stats">';
-
-    h += '<div class="stat-cards">' +
-      card('受訓醫師', rows.length, '人') +
-      card('涵蓋月份', months.length, '個月') +
-      card('已排課月數', slots, '人月') +
-      card('排課完成率', capacity ? Math.round(slots / capacity * 100) + '%' : '—', slots + ' / ' + capacity) +
-      card('訓練單位', Object.keys(unitTotal).length, '種') +
-      '</div>';
-
-    h += '<h3 class="sec">各科別總人月數</h3><div class="bars">';
-    catKeys.forEach(function (k) {
-      var col = catColor(k);
-      h += '<div class="bar"><span class="bt">' + esc(k) + '</span>' +
-        '<span class="bw"><i class="bf" style="width:' + (catTotal[k] / maxCat * 100) + '%;background:' + col +
-        ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '"></i></span>' +
-        '<span class="bn">' + catTotal[k] + ' 人月</span></div>';
-    });
-    h += '</div>';
-
-    h += '<h3 class="sec">逐月科別分布</h3>';
-    months.forEach(function (m) {
-      var b = byMonth[m.key] || {};
-      var tot = Object.keys(b).reduce(function (s, k) { return s + b[k]; }, 0);
-      h += '<div class="mrow-stat"><span class="ml">' + esc(m.label) + '</span><span class="stack">';
-      if (!tot) {
-        h += '<i style="width:100%;background:var(--line-2)"></i>';
-      } else {
-        catKeys.forEach(function (k) {
-          if (!b[k]) return;
-          var col = catColor(k);
-          h += '<i style="width:' + (b[k] / tot * 100) + '%;background:' + col +
-            ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '" title="' +
-            esc(m.label + ' ' + k + ' ' + b[k] + ' 人') + '"></i>';
-        });
-      }
-      h += '</span></div>';
-    });
-
-    var unitKeys = Object.keys(unitTotal).sort(function (a, b) { return unitTotal[b] - unitTotal[a]; });
-    var maxUnit = unitKeys.length ? unitTotal[unitKeys[0]] : 1;
-    h += '<h3 class="sec">' + (CFG.MONTH_GROUP_BY === 'category' ? '各科別人月數（同上）' : '各訓練單位人月數') +
-      '</h3><div class="bars">';
-    unitKeys.forEach(function (k) {
-      var col = groupColor(k);
-      h += '<div class="bar"><span class="bt">' + esc(k) + '</span>' +
-        '<span class="bw"><i class="bf" style="width:' + (unitTotal[k] / maxUnit * 100) + '%;background:' + col +
-        ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '"></i></span>' +
-        '<span class="bn">' + unitTotal[k] + ' 人月</span></div>';
-    });
-    h += '</div></div>';
-    return h;
-
-    function card(lbl, num, foot) {
-      return '<div class="scard"><div class="lbl">' + esc(lbl) + '</div><div class="num">' +
-        esc(num) + '</div><div class="foot">' + esc(foot) + '</div></div>';
-    }
-  }
-
-  function emptyState(msg) {
-    return '<div class="empty-state"><div class="big">🗓</div><div>' + esc(msg) + '</div></div>';
+  function emptyState(msg, icon) {
+    return '<div class="empty-state"><div class="big">' + (icon || '🗓') + '</div>' +
+      '<div>' + esc(msg) + '</div></div>';
   }
 
   /* --------------------------------------------------------- 主要繪製 */
@@ -627,10 +563,8 @@
         '<button class="btn" id="btn-print">列印 / PDF</button></div></div>' + viewGrid();
     } else if (state.view === 'month') {
       body = viewMonth();
-    } else if (state.view === 'person') {
-      body = viewPerson();
     } else {
-      body = viewStats();
+      body = viewPerson();
     }
     $('#view').innerHTML = body;
     syncStickyOffset();
@@ -726,7 +660,7 @@
 
     $('#btn-reset').addEventListener('click', function () {
       state.filters = { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' };
-      state.focusPerson = '';
+      state.personQuery = '';
       $('#f-q').value = '';
       render();
     });
@@ -748,8 +682,8 @@
 
     $('#view').addEventListener('click', function (e) {
       var p = e.target.closest('[data-person]');
-      if (p) { state.focusPerson = p.dataset.person; state.view = 'person'; render(); return; }
-      if (e.target.id === 'p-clear') { state.focusPerson = ''; render(); return; }
+      if (p) { state.personQuery = p.dataset.person; state.view = 'person'; render(); return; }
+      if (e.target.id === 'p-clear') { state.personQuery = ''; render(); return; }
       if (e.target.id === 'btn-csv') { exportCsv(); return; }
       if (e.target.id === 'btn-print') { window.print(); return; }
       if (e.target.id === 'm-prev') { state.monthIndex = Math.max(0, state.monthIndex - 1); render(); return; }
@@ -758,6 +692,18 @@
 
     $('#view').addEventListener('change', function (e) {
       if (e.target.id === 'm-pick') { state.monthIndex = Number(e.target.value); render(); }
+    });
+
+    // #view 每次都整段重繪，輸入框會被換掉，所以重繪後要把焦點與游標位置還原
+    $('#view').addEventListener('input', function (e) {
+      if (e.target.id !== 'p-q') return;
+      var pos = e.target.selectionStart;
+      state.personQuery = e.target.value;
+      render();
+      var el = $('#p-q');
+      if (!el) return;
+      el.focus();
+      try { el.setSelectionRange(pos, pos); } catch (err) { /* type=search 不一定支援 */ }
     });
 
     window.addEventListener('resize', syncStickyOffset);
