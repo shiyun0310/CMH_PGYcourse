@@ -1,37 +1,37 @@
 /* ================= PGY 訓練課程表 ================= */
 :root{
-  --bg:#f4f6fa;
+  --bg:#faf5f7;
   --panel:#ffffff;
-  --panel-2:#fafbfd;
+  --panel-2:#fdfafb;
   --ink:#1b2432;
   --ink-2:#5a6678;
   --ink-3:#8b95a6;
-  --line:#e2e7ef;
-  --line-2:#eef1f6;
-  --brand:#0f5c8c;
-  --brand-2:#12799e;
-  --brand-soft:#e6f1f8;
+  --line:#efe3e8;
+  --line-2:#f6edf1;
+  --brand:#A83459;
+  --brand-2:#C9456B;
+  --brand-soft:#FCEBF1;
   --accent:#c8862b;
   --ok:#1c7a4f;
   --warn:#b06a00;
   --err:#b3261e;
-  --shadow:0 1px 2px rgba(20,35,60,.06),0 8px 24px rgba(20,35,60,.07);
+  --shadow:0 1px 2px rgba(80,30,50,.06),0 8px 24px rgba(80,30,50,.08);
   --radius:14px;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 }
 [data-theme="dark"]{
-  --bg:#0f151f;
-  --panel:#171f2b;
-  --panel-2:#1c2532;
-  --ink:#e8edf5;
-  --ink-2:#a4b0c2;
-  --ink-3:#78849a;
-  --line:#2a3545;
-  --line-2:#222c3a;
-  --brand:#6fb6e0;
-  --brand-2:#8dc9ec;
-  --brand-soft:#1d2c3a;
+  --bg:#180f14;
+  --panel:#241a1f;
+  --panel-2:#2b1f25;
+  --ink:#f5ebef;
+  --ink-2:#c4aeb7;
+  --ink-3:#96808a;
+  --line:#3d2c34;
+  --line-2:#32242b;
+  --brand:#F0A0BC;
+  --brand-2:#F7BBD0;
+  --brand-soft:#3B2430;
   --accent:#e0ac5c;
   --ok:#5fce9c;
   --warn:#e2b062;
@@ -56,19 +56,18 @@ a{color:var(--brand-2)}
 
 /* ---------- Header ---------- */
 .top{
-  background:linear-gradient(135deg,var(--brand) 0%,#0b4568 60%,#0a3a58 100%);
+  background:linear-gradient(135deg,#C9456B 0%,#A83459 55%,#8C2A4B 100%);
   color:#fff;padding:22px 0 20px;box-shadow:var(--shadow);
 }
-[data-theme="dark"] .top{background:linear-gradient(135deg,#16324a 0%,#122539 60%,#101d2c 100%)}
+[data-theme="dark"] .top{background:linear-gradient(135deg,#7A2C48 0%,#5C2036 60%,#431627 100%)}
 .top .wrap{padding-bottom:0;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
 .brand{display:flex;align-items:center;gap:14px;min-width:0}
 .brand .mark{
-  width:44px;height:44px;border-radius:12px;flex:none;
-  background:linear-gradient(135deg,var(--accent),#e9c07a);
-  display:grid;place-items:center;color:#3a2a08;font-weight:800;font-size:15px;letter-spacing:.5px;
+  width:48px;height:44px;flex:none;display:block;
+  filter:drop-shadow(0 2px 4px rgba(60,10,30,.28));
 }
 .brand h1{margin:0;font-size:21px;font-weight:700;letter-spacing:.5px;line-height:1.25}
-.brand p{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,.72)}
+.brand p{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,.82)}
 .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
 /* ---------- Status pill ---------- */
