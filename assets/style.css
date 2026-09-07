@@ -108,7 +108,7 @@ a{color:var(--brand-2)}
 .field label{font-size:11.5px;font-weight:700;color:var(--ink-3);letter-spacing:.4px}
 .field select,.field input{
   padding:7px 10px;border-radius:9px;border:1px solid var(--line);
-  background:var(--panel-2);min-width:130px;outline:none;transition:.15s;
+  background:var(--panel-2);min-width:130px;max-width:100%;outline:none;transition:.15s;
 }
 .field input{min-width:210px}
 .field select:focus,.field input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
@@ -171,6 +171,9 @@ table.grid thead tr.yrow th.fx,
 table.grid thead tr.mrow th.fx{z-index:6;background:var(--brand-soft)}
 /* 只在固定欄區塊的最後一欄畫分隔線，區隔固定欄與月份欄 */
 table.grid th.fx-last,table.grid td.fx-last{border-right:2px solid var(--line)}
+/* 窄螢幕只釘住「受訓醫師」欄，其餘固定欄會從它下面捲過去 */
+table.grid td.fx-id{z-index:3}
+table.grid thead th.fx-id{z-index:7}
 table.grid tbody tr:hover td{background:var(--brand-soft)}
 table.grid tbody tr:hover td.fx{background:var(--brand-soft)}
 table.grid td.name{font-weight:700;color:var(--ink);text-align:left}
@@ -191,7 +194,7 @@ table.grid td.q1{border-left:2px solid var(--line)}
 .rowbtn:hover{color:var(--accent)}
 
 /* ---------- Month view ---------- */
-.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;padding:16px}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(310px,100%),1fr));gap:14px;padding:16px}
 .mcard{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel-2)}
 .mcard h3{
   margin:0;padding:9px 13px;font-size:13.5px;font-weight:700;
@@ -217,10 +220,10 @@ table.grid td.q1{border-left:2px solid var(--line)}
 .count-badge{background:rgba(0,0,0,.16);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:800}
 
 /* ---------- Person view ---------- */
-.pfind{display:flex;gap:8px;align-items:center}
+.pfind{display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:100%}
 .pfind input{
   padding:7px 11px;border-radius:9px;border:1px solid var(--line);
-  background:var(--panel-2);min-width:240px;outline:none;transition:.15s;
+  background:var(--panel-2);flex:1 1 180px;min-width:0;outline:none;transition:.15s;
 }
 .pfind input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
 .plist{padding:16px;display:flex;flex-direction:column;gap:14px}
@@ -278,9 +281,45 @@ table.grid td.q1{border-left:2px solid var(--line)}
   table.grid .cell{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .view{border-radius:0}
 }
+/* ---------- 響應式 ---------- */
+@media (max-width:900px){
+  .wrap{padding:16px 14px 48px}
+  /* 固定欄的水平黏著由 JS 在此寬度以下關閉（見 app.js 的 FX_MIN_WIDTH） */
+}
+
 @media (max-width:720px){
-  .wrap{padding:14px 12px 48px}
+  .wrap{padding:14px 12px 44px}
+  .top{padding:16px 0 14px}
   .brand h1{font-size:18px}
-  .tscroll{max-height:none}
-  .bar{grid-template-columns:66px 1fr 46px}
+  .brand .mark{width:40px;height:37px}
+  /* 保留內部捲動高度，表頭才能黏住；設 none 會讓年／月表頭跟著捲走 */
+  .tscroll{max-height:68vh}
+  .field.grow{flex:1 1 100%}
+  .view-head{padding:11px 13px}
+  .mgrid{padding:13px;gap:12px}
+  .plist{padding:13px;gap:12px}
+}
+
+@media (max-width:520px){
+  .wrap{padding:12px 10px 40px}
+  .top .wrap{gap:10px}
+  .brand h1{font-size:17px}
+  .brand p{font-size:11.5px}
+  .top-actions{width:100%}
+  .top-actions .pill{order:-1}
+  .filters{padding:12px}
+  .filter-grid{gap:10px}
+  .field select,.field input{min-width:0;width:100%}
+  .field{flex:1 1 calc(50% - 5px)}
+  .field.grow{flex:1 1 100%}
+  .filter-grid .field:last-child{flex:0 0 auto}   /* 清除條件不要撐成整列 */
+  .tab{padding:8px 13px;font-size:13px}
+  .view-head{padding:10px 12px}
+  .view-head h2{font-size:14px}
+  .tscroll{max-height:70vh}
+  table.grid{font-size:12.5px}
+  table.grid th,table.grid td{padding:6px 7px}
+  .pcard header{padding:10px 12px;gap:6px 12px}
+  .pcard header .pn{font-size:15px}
+  .mcard li .pid{min-width:52px}
 }

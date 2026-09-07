@@ -353,7 +353,8 @@
     var h = '<div class="tscroll"><table class="grid"><thead>';
     h += '<tr class="yrow">';
     fixed.forEach(function (c, i) {
-      h += '<th class="fx' + (i === fixed.length - 1 ? ' fx-last' : '') + '"' +
+      h += '<th class="fx' + (i === fixed.length - 1 ? ' fx-last' : '') +
+        (c === '受訓醫師' ? ' fx-id' : '') + '"' +
         ' data-fx="' + i + '" rowspan="2">' + esc(c) + '</th>';
     });
     groups.forEach(function (g) {
@@ -369,7 +370,7 @@
       h += '<tr>';
       fixed.forEach(function (c, i) {
         var cls = 'fx' + (i === fixed.length - 1 ? ' fx-last' : '') +
-          (c === '受訓醫師' ? ' name' : ' dim');
+          (c === '受訓醫師' ? ' fx-id name' : ' dim');
         var inner = (c === '受訓醫師')
           ? '<button class="rowbtn" data-person="' + esc(r[c]) + '">' + esc(r[c] || '—') + '</button>'
           : esc(r[c] || '—');
@@ -559,7 +560,8 @@
    * 上方：固定欄的 th 有 rowspan="2"，量它會得到兩列的高度，
    *       必須量沒有 rowspan 的「年份」th 才是年份列的真實高度。
    * 左側：七個固定欄要一個接一個排好，所以逐欄累加寬度算出各自的 left。
-   *       視窗太窄時整塊固定欄會吃掉太多空間，改成不做水平固定。 */
+   *       視窗太窄時七欄會吃掉整個畫面，改成只固定「受訓醫師」一欄 ——
+   *       否則橫向捲動後完全看不出這是誰的列。 */
   var FX_MIN_WIDTH = 900;
 
   function syncStickyOffset() {
@@ -578,7 +580,8 @@
     });
     $$('.grid .fx').forEach(function (cell) {
       var i = Number(cell.dataset.fx);
-      cell.style.left = (wide && offsets[i] != null) ? offsets[i] + 'px' : 'auto';
+      if (wide && offsets[i] != null) cell.style.left = offsets[i] + 'px';
+      else cell.style.left = cell.classList.contains('fx-id') ? '0px' : 'auto';
     });
   }
 
