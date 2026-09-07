@@ -163,18 +163,20 @@ table.grid thead th{
 }
 table.grid thead tr.yrow th{top:0;z-index:4;background:var(--brand-soft);color:var(--brand);letter-spacing:.5px}
 table.grid thead tr.mrow th{top:31px;z-index:3}
+/* 七個固定欄一起黏在左側，實際 left 由 JS 逐欄累加寬度算出 */
 table.grid td.fx,table.grid th.fx{
-  position:sticky;left:0;z-index:2;background:var(--panel);text-align:left;
+  position:sticky;left:auto;z-index:2;background:var(--panel);
 }
+table.grid td.name{text-align:left}
 table.grid thead th.fx{z-index:5;background:var(--panel-2)}
 /* 特異性要壓過 `thead tr.yrow th`，否則年份表頭會蓋住固定欄表頭 */
 table.grid thead tr.yrow th.fx,
 table.grid thead tr.mrow th.fx{z-index:6;background:var(--brand-soft)}
-/* 固定欄與月份欄之間的分隔線 */
-table.grid th.fx,table.grid td.fx{border-right:2px solid var(--line)}
+/* 只在固定欄區塊的最後一欄畫分隔線，區隔固定欄與月份欄 */
+table.grid th.fx-last,table.grid td.fx-last{border-right:2px solid var(--line)}
 table.grid tbody tr:hover td{background:var(--brand-soft)}
 table.grid tbody tr:hover td.fx{background:var(--brand-soft)}
-table.grid td.name{font-weight:700;color:var(--ink)}
+table.grid td.name{font-weight:700;color:var(--ink);text-align:left}
 table.grid td.dim{color:var(--ink-3);font-size:12px}
 table.grid .cell{
   display:block;border-radius:6px;padding:3px 6px;font-weight:600;font-size:12.5px;

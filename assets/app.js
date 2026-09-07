@@ -6,7 +6,7 @@
   'use strict';
 
   var CFG = window.PGY_CONFIG || {};
-  var FIXED_ORDER = ['受訓醫師', '期程', '組別', '長期導師', '人事號', '簡碼', '學年度'];
+  var FIXED_ORDER = ['長期導師', '學年度', '期程', '組別', '人事號', '簡碼', '受訓醫師'];
 
   var state = {
     data: null,          // 正規化後的資料
@@ -364,7 +364,8 @@
     var h = '<div class="tscroll"><table class="grid"><thead>';
     h += '<tr class="yrow">';
     fixed.forEach(function (c, i) {
-      h += '<th class="' + (i === 0 ? 'fx' : '') + '" rowspan="2">' + esc(c) + '</th>';
+      h += '<th class="fx' + (i === fixed.length - 1 ? ' fx-last' : '') + '"' +
+        ' data-fx="' + i + '" rowspan="2">' + esc(c) + '</th>';
     });
     groups.forEach(function (g) {
       h += '<th colspan="' + g.n + '">' + esc(g.year) + ' 年</th>';
@@ -378,13 +379,12 @@
     rows.forEach(function (r) {
       h += '<tr>';
       fixed.forEach(function (c, i) {
-        var cls = i === 0 ? 'fx name' : 'dim';
-        if (i === 0) {
-          h += '<td class="' + cls + '"><button class="rowbtn" data-person="' + esc(r['受訓醫師']) + '">' +
-            esc(r[c] || '—') + '</button></td>';
-        } else {
-          h += '<td class="' + cls + '">' + esc(r[c] || '—') + '</td>';
-        }
+        var cls = 'fx' + (i === fixed.length - 1 ? ' fx-last' : '') +
+          (c === '受訓醫師' ? ' name' : ' dim');
+        var inner = (c === '受訓醫師')
+          ? '<button class="rowbtn" data-person="' + esc(r[c]) + '">' + esc(r[c] || '—') + '</button>'
+          : esc(r[c] || '—');
+        h += '<td class="' + cls + '" data-fx="' + i + '">' + inner + '</td>';
       });
       months.forEach(function (m) {
         var cell = r.months[m.key];
@@ -570,15 +570,31 @@
     syncStickyOffset();
   }
 
-  /* 讓月份表頭固定在年份表頭下方（高度隨字型變化）。
-   * 注意：固定欄的 th 有 rowspan="2"，量它會得到兩列的高度，
-   * 必須量沒有 rowspan 的「年份」th 才是年份列的真實高度。 */
+  /* 表頭與固定欄的黏著位置。
+   * 上方：固定欄的 th 有 rowspan="2"，量它會得到兩列的高度，
+   *       必須量沒有 rowspan 的「年份」th 才是年份列的真實高度。
+   * 左側：七個固定欄要一個接一個排好，所以逐欄累加寬度算出各自的 left。
+   *       視窗太窄時整塊固定欄會吃掉太多空間，改成不做水平固定。 */
+  var FX_MIN_WIDTH = 900;
+
   function syncStickyOffset() {
     var mrow = $$('.grid thead tr.mrow th');
     if (!mrow.length) return;
+
     var y = $('.grid thead tr.yrow th:not([rowspan])');
     var h = y ? y.getBoundingClientRect().height : 0;
     mrow.forEach(function (th) { th.style.top = h + 'px'; });
+
+    var wide = window.innerWidth >= FX_MIN_WIDTH;
+    var offsets = [], acc = 0;
+    $$('.grid thead th.fx').forEach(function (th) {
+      offsets.push(acc);
+      acc += th.getBoundingClientRect().width;
+    });
+    $$('.grid .fx').forEach(function (cell) {
+      var i = Number(cell.dataset.fx);
+      cell.style.left = (wide && offsets[i] != null) ? offsets[i] + 'px' : 'auto';
+    });
   }
 
   /* ------------------------------------------------------------ CSV */
