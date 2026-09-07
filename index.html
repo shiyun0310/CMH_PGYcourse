@@ -81,10 +81,12 @@
   <section class="panel view" id="view"></section>
 
   <div class="note">
-    <b>資料來源說明：</b>本頁一律以 Google Sheets 的內容為準（含儲存格底色）。
+    <b>資料來源說明：</b>本頁一律以 Google Sheets 的內容為準。
     只要在試算表新增／修改列或欄，按 <code>↻ 重新整理</code> 即可同步；
     尚未設定 <code>GAS_WEB_APP_URL</code> 時會顯示離線範例資料。
     表頭欄位固定為：長期導師、學年度、組別、期程、人事號、簡碼、受訓醫師，其後為各月份（<code>yyyy/mm</code>）。
+    <br><b>顏色規則：</b>只看開頭字元 ——「內」開頭的（<code>內</code>、<code>內(Y2不分)</code>、<code>內(外)</code>）一律是內科黃色；
+    <code>急-內</code> 開頭是「急」，歸急診藍色。同科別顏色必定一致。
   </div>
 
   <p class="foot">PGY 訓練課程表 · 前端以 Google Sheets 為單一資料來源</p>

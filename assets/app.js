@@ -53,11 +53,24 @@
     return '其他';
   }
 
-  /* 儲存格顏色：Sheets 底色優先，其次預設色票 */
-  function colorOf(cell) {
-    if (cell && cell.color && /^#[0-9a-f]{6}$/i.test(cell.color)) return cell.color;
+  /* 儲存格顏色
+   *   COLOR_SOURCE = 'category'（預設）：一律依科別上色，同科別顏色必定一致
+   *   COLOR_SOURCE = 'sheets'         ：Sheets 底色優先，沒有底色才用色票 */
+  /* 科別名 → 顏色（例：'內科'） */
+  function catColor(cat) {
     var map = CFG.CATEGORY_COLORS || {};
-    return map[categoryOf(cell && cell.value)] || map['其他'] || '#d9d9d9';
+    return map[cat] || map['其他'] || '#d9d9d9';
+  }
+
+  /* 原始值 → 顏色（例：'內(Y2不分)' → 內科的黃色） */
+  function valueColor(v) {
+    return catColor(categoryOf(v));
+  }
+
+  function colorOf(cell) {
+    if (CFG.COLOR_SOURCE === 'sheets' &&
+        cell && cell.color && /^#[0-9a-f]{6}$/i.test(cell.color)) return cell.color;
+    return valueColor(cell && cell.value);
   }
 
   function uniq(arr) {
@@ -266,7 +279,7 @@
     }
 
     $('#chips').innerHTML = catsInUse().map(function (c) {
-      var col = (CFG.CATEGORY_COLORS || {})[c.name] || '#d9d9d9';
+      var col = catColor(c.name);
       return '<button class="chip' + (f.cats[c.name] ? ' on' : '') + '" data-cat="' + esc(c.name) + '">' +
         '<i class="sw" style="background:' + col + '"></i>' + esc(c.name) +
         '<i class="n">' + c.n + '</i></button>';
@@ -425,7 +438,7 @@
 
       h += '</div><div class="psum">';
       Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a]; }).forEach(function (k) {
-        var col = (CFG.CATEGORY_COLORS || {})[k] || '#d9d9d9';
+        var col = catColor(k);
         h += '<span class="s" style="background:' + col + ';color:' + inkOn(col) + '">' +
           esc(k) + ' ' + tally[k] + ' 月</span>';
       });
@@ -468,7 +481,7 @@
 
     h += '<h3 class="sec">各科別總人月數</h3><div class="bars">';
     catKeys.forEach(function (k) {
-      var col = (CFG.CATEGORY_COLORS || {})[k] || '#d9d9d9';
+      var col = catColor(k);
       h += '<div class="bar"><span class="bt">' + esc(k) + '</span>' +
         '<span class="bw"><i class="bf" style="width:' + (catTotal[k] / maxCat * 100) + '%;background:' + col + '"></i></span>' +
         '<span class="bn">' + catTotal[k] + ' 人月</span></div>';
@@ -485,7 +498,7 @@
       } else {
         catKeys.forEach(function (k) {
           if (!b[k]) return;
-          var col = (CFG.CATEGORY_COLORS || {})[k] || '#d9d9d9';
+          var col = catColor(k);
           h += '<i style="width:' + (b[k] / tot * 100) + '%;background:' + col + '" title="' +
             esc(m.label + ' ' + k + ' ' + b[k] + ' 人') + '"></i>';
         });
@@ -497,7 +510,7 @@
     var maxUnit = unitKeys.length ? unitTotal[unitKeys[0]] : 1;
     h += '<h3 class="sec">各訓練單位人月數</h3><div class="bars">';
     unitKeys.forEach(function (k) {
-      var col = (CFG.CATEGORY_COLORS || {})[categoryOf(k)] || '#d9d9d9';
+      var col = valueColor(k);
       h += '<div class="bar"><span class="bt">' + esc(k) + '</span>' +
         '<span class="bw"><i class="bf" style="width:' + (unitTotal[k] / maxUnit * 100) + '%;background:' + col + '"></i></span>' +
         '<span class="bn">' + unitTotal[k] + ' 人月</span></div>';
