@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PGY 訓練課程表</title>
+<meta name="description" content="PGY 畢業後一般醫學訓練年度輪訓課程表，資料以 Google Sheets 為主。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">PGY</div>
+      <div>
+        <h1 id="title">PGY 訓練課程表</h1>
+        <p id="subtitle">畢業後一般醫學訓練　年度輪訓月曆</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="pill is-loading" id="status"><span class="dot"></span>讀取中…</span>
+      <button class="btn ghost" id="btn-refresh" title="重新向 Google Sheets 取得最新資料">↻ 重新整理</button>
+      <button class="btn ghost" id="btn-theme" title="切換深色 / 淺色">◐ 佈景</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div id="banner"></div>
+
+  <section class="panel filters">
+    <div class="filter-grid">
+      <div class="field grow">
+        <label for="f-q">搜尋（姓名／人事號／簡碼／科別）</label>
+        <input id="f-q" type="search" placeholder="輸入關鍵字…" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-sheet">工作表</label>
+        <select id="f-sheet"></select>
+      </div>
+      <div class="field">
+        <label for="f-year">學年度</label>
+        <select id="f-year"></select>
+      </div>
+      <div class="field">
+        <label for="f-stage">期程</label>
+        <select id="f-stage"></select>
+      </div>
+      <div class="field">
+        <label for="f-group">組別</label>
+        <select id="f-group"></select>
+      </div>
+      <div class="field">
+        <label for="f-mentor">長期導師</label>
+        <select id="f-mentor"></select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn" id="btn-reset">清除條件</button>
+      </div>
+    </div>
+
+    <div class="filter-foot">
+      <div class="chips" id="chips"></div>
+      <label class="toggle">
+        <input type="checkbox" id="f-empty" checked> 隱藏無排課的月份
+      </label>
+    </div>
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-view="grid">總覽表</button>
+    <button class="tab" data-view="month">月份檢視</button>
+    <button class="tab" data-view="person">個人時程</button>
+    <button class="tab" data-view="stats">統計</button>
+  </nav>
+
+  <section class="panel view" id="view"></section>
+
+  <div class="note">
+    <b>資料來源說明：</b>本頁一律以 Google Sheets 的內容為準（含儲存格底色）。
+    只要在試算表新增／修改列或欄，按 <code>↻ 重新整理</code> 即可同步；
+    尚未設定 <code>GAS_WEB_APP_URL</code> 時會顯示離線範例資料。
+    表頭欄位固定為：長期導師、學年度、組別、期程、人事號、簡碼、受訓醫師，其後為各月份（<code>yyyy/mm</code>）。
+  </div>
+
+  <p class="foot">PGY 訓練課程表 · 前端以 Google Sheets 為單一資料來源</p>
+</main>
+
+<script src="assets/config.js"></script>
+<script src="assets/sample-data.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
