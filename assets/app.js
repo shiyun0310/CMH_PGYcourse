@@ -324,9 +324,10 @@
 
     $('#chips').innerHTML = catsInUse().map(function (c) {
       var col = catColor(c.name);
-      return '<button class="chip' + (f.cats[c.name] ? ' on' : '') + '" data-cat="' + esc(c.name) + '">' +
-        '<i class="sw" style="background:' + col + '"></i>' + esc(c.name) +
-        '<i class="n">' + c.n + '</i></button>';
+      // title 保留人月數，滑鼠停留才顯示，chip 上不放數字
+      return '<button class="chip' + (f.cats[c.name] ? ' on' : '') + '" data-cat="' + esc(c.name) + '"' +
+        ' title="' + esc(c.name + '　' + c.n + ' 人月') + '">' +
+        '<i class="sw" style="background:' + col + '"></i>' + esc(c.name) + '</button>';
     }).join('') || '<span style="color:var(--ink-3);font-size:12.5px">尚無課程資料</span>';
 
     $('#f-empty').checked = state.hideEmptyMonths;
