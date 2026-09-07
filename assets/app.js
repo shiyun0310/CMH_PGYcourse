@@ -16,7 +16,6 @@
     view: 'grid',
     monthIndex: 0,
     filters: { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' },   // cat 為單選，'' = 全部
-    hideEmptyMonths: true,
     personQuery: ''      // 個人時程要先輸入姓名或人事號才顯示
   };
 
@@ -226,15 +225,6 @@
   }
 
   /* ------------------------------------------------------------ 篩選 */
-  function activeMonths() {
-    var d = state.data;
-    if (!state.hideEmptyMonths) return d.monthCols;
-    var rows = d.rows;
-    return d.monthCols.filter(function (m) {
-      return rows.some(function (r) { return r.months[m.key]; });
-    });
-  }
-
   function catsInUse() {
     var order = Object.keys(CFG.CATEGORY_COLORS || {});
     var found = {};
@@ -344,12 +334,11 @@
         esc(c.name) + '</button>';
     }).join('') || '<span style="color:var(--ink-3);font-size:12.5px">尚無課程資料</span>';
 
-    $('#f-empty').checked = state.hideEmptyMonths;
   }
 
   /* ------------------------------------------------------- 檢視：總覽表 */
   function viewGrid() {
-    var d = state.data, months = activeMonths(), rows = filteredRows();
+    var d = state.data, months = d.monthCols, rows = filteredRows();
     if (!rows.length) return emptyState('沒有符合條件的受訓醫師');
 
     // 年份分組表頭
@@ -403,7 +392,7 @@
 
   /* ------------------------------------------------------- 檢視：月份 */
   function viewMonth() {
-    var months = activeMonths(), rows = filteredRows();
+    var months = state.data.monthCols, rows = filteredRows();
     if (!months.length) return emptyState('沒有可顯示的月份');
     if (state.monthIndex >= months.length) state.monthIndex = 0;
     var m = months[state.monthIndex];
@@ -470,7 +459,7 @@
 
   /* ------------------------------------------------------- 檢視：個人 */
   function viewPerson() {
-    var months = activeMonths();
+    var months = state.data.monthCols;
     var q = String(state.personQuery || '').trim();
 
     var box = '<div class="view-head"><div><h2>個人輪訓時程</h2>' +
@@ -555,7 +544,7 @@
 
     var body;
     if (state.view === 'grid') {
-      var months = activeMonths(), rows = filteredRows();
+      var months = state.data.monthCols, rows = filteredRows();
       body = '<div class="view-head"><div><h2>' + esc(state.data.sheet || '輪訓總覽') + '</h2>' +
         '<div class="sub">' + rows.length + ' 位受訓醫師 ／ ' + months.length + ' 個月' +
         (state.data.updatedAt ? '　·　更新於 ' + esc(state.data.updatedAt) : '') + '</div></div>' +
@@ -599,7 +588,7 @@
 
   /* ------------------------------------------------------------ CSV */
   function exportCsv() {
-    var d = state.data, months = activeMonths(), rows = filteredRows();
+    var d = state.data, months = d.monthCols, rows = filteredRows();
     var head = d.fixedCols.concat(months.map(function (m) { return m.label; }));
     var lines = [head];
     rows.forEach(function (r) {
@@ -672,7 +661,6 @@
       $('#f-' + p[0]).addEventListener('change', function (e) { state.filters[p[1]] = e.target.value; render(); });
     });
     $('#f-sheet').addEventListener('change', function (e) { load(e.target.value); });
-    $('#f-empty').addEventListener('change', function (e) { state.hideEmptyMonths = e.target.checked; render(); });
 
     $('#btn-reset').addEventListener('click', function () {
       state.filters = { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' };
