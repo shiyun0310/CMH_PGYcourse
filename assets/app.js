@@ -117,6 +117,12 @@
     return valueColor(cell && cell.value);
   }
 
+  /* 期程 → 排序名次：PGY1 → 1、PGY2 → 2、Y1 → 1；取不到數字的排最後 */
+  function stageRank(v) {
+    var m = String(v == null ? '' : v).match(/\d+/);
+    return m ? Number(m[0]) : 9999;
+  }
+
   function uniq(arr) {
     var seen = {}, out = [];
     arr.forEach(function (v) { if (v !== '' && v != null && !seen[v]) { seen[v] = 1; out.push(v); } });
@@ -431,11 +437,19 @@
       h += '<div class="mcard"><h3 style="background:' + col + ';color:' + fg + '">' +
         '<span>' + esc(k) + '</span><span class="count-badge">' + buckets[k].length + ' 人</span></h3><ul>';
       buckets[k].sort(function (a, b) {
+        // 先依期程 PGY1 → PGY2 → …，同期程再依人事號、姓名
+        var d = stageRank(a.row['期程']) - stageRank(b.row['期程']);
+        if (d) return d;
+        // 人事號是固定長度代碼（B508F1、B50810），用字典序；不可加 numeric，
+        // 否則會被拆成 B + 數字比較，B5089 會排到 B50810 前面
+        d = String(a.row['人事號']).localeCompare(String(b.row['人事號']), 'zh-Hant');
+        if (d) return d;
         return String(a.row['受訓醫師']).localeCompare(String(b.row['受訓醫師']), 'zh-Hant');
       }).forEach(function (it) {
         // 原始寫法與分組名不同時（例：內(Y2不分) 併進「內」），把註記顯示出來
         var note = it.value === k ? '' : '<i class="vtag">' + esc(it.value) + '</i>';
-        h += '<li><b>' + esc(it.row['受訓醫師']) + '</b>' + note +
+        h += '<li><i class="pid">' + esc(it.row['人事號']) + '</i>' +
+          '<b>' + esc(it.row['受訓醫師']) + '</b>' + note +
           '<span>' + esc([it.row['期程'], it.row['簡碼']].filter(Boolean).join('・')) + '</span></li>';
       });
       h += '</ul></div>';
