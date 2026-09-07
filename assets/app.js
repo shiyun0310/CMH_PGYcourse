@@ -420,11 +420,7 @@
       '<button class="btn" id="m-next"' + (state.monthIndex === months.length - 1 ? ' disabled' : '') + '>下個月 ›</button>' +
       '</div>';
 
-    var assigned = keys.reduce(function (s, k) { return s + buckets[k].length; }, 0);
-
-    var h = '<div class="view-head"><div><h2>' + esc(m.label) + ' 輪訓分布</h2>' +
-      '<div class="sub">' + keys.length + (CFG.MONTH_GROUP_BY === 'category' ? ' 個科別' : ' 個訓練單位') +
-      ' ／ ' + assigned + ' 位受訓醫師已排定（篩選後共 ' + rows.length + ' 位）</div></div>' +
+    var h = '<div class="view-head"><div><h2>' + esc(m.label) + ' 輪訓分布</h2></div>' +
       nav + '</div>';
 
     if (!keys.length) return h + emptyState('本月沒有符合條件的排課');
