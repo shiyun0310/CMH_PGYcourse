@@ -47,6 +47,13 @@
     return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
   }
 
+  /* 色塊描邊顏色：白色色塊要在白底上看得見，黑色色塊要在深色模式下看得見。
+   * 只有極深的顏色才改用淺色描邊，其餘維持原本的深色描邊。 */
+  function ringOn(hex) {
+    var L = luminance(hex);
+    return (L != null && L < 0.06) ? 'rgba(255,255,255,.34)' : 'rgba(0,0,0,.18)';
+  }
+
   /* 依背景色挑深色或白色文字 —— 實際比較兩者的對比度，取高的那個。
    * （固定門檻會在中間色調挑錯，例如 #00B0F0 配白字只有 2.5:1） */
   function inkOn(hex) {
@@ -333,7 +340,8 @@
       // title 保留人月數，滑鼠停留才顯示，chip 上不放數字
       return '<button class="chip' + (f.cat === c.name ? ' on' : '') + '" data-cat="' + esc(c.name) + '"' +
         ' title="' + esc(c.name + '　' + c.n + ' 人月') + '">' +
-        '<i class="sw" style="background:' + col + '"></i>' + esc(c.name) + '</button>';
+        '<i class="sw" style="background:' + col + ';border-color:' + ringOn(col) + '"></i>' +
+        esc(c.name) + '</button>';
     }).join('') || '<span style="color:var(--ink-3);font-size:12.5px">尚無課程資料</span>';
 
     $('#f-empty').checked = state.hideEmptyMonths;
@@ -383,7 +391,8 @@
         if (!cell) { h += '<td class="empty"></td>'; return; }
         var bg = colorOf(cell), fg = inkOn(bg), dim = cellDim(cell);
         h += '<td' + (dim ? ' style="opacity:.22"' : '') + '><span class="cell" style="background:' + bg +
-          ';color:' + fg + '" title="' + esc(m.label + '　' + cell.value) + '">' + esc(cell.value) + '</span></td>';
+          ';color:' + fg + ';box-shadow:inset 0 0 0 1px ' + ringOn(bg) + '" title="' +
+          esc(m.label + '　' + cell.value) + '">' + esc(cell.value) + '</span></td>';
       });
       h += '</tr>';
     });
@@ -434,7 +443,8 @@
     h += '<div class="mgrid">';
     keys.forEach(function (k) {
       var col = groupColor(k), fg = inkOn(col);
-      h += '<div class="mcard"><h3 style="background:' + col + ';color:' + fg + '">' +
+      h += '<div class="mcard"><h3 style="background:' + col + ';color:' + fg +
+        ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '">' +
         '<span>' + esc(k) + '</span><span class="count-badge">' + buckets[k].length + ' 人</span></h3><ul>';
       buckets[k].sort(function (a, b) {
         // 先依期程 PGY1 → PGY2 → …，同期程再依人事號、姓名
@@ -496,15 +506,16 @@
           return;
         }
         var bg = colorOf(c), fg = inkOn(bg), dim = cellDim(c);
-        h += '<div class="seg" style="background:' + bg + ';color:' + fg + (dim ? ';opacity:.22' : '') + '">' +
+        h += '<div class="seg" style="background:' + bg + ';color:' + fg +
+          ';border-color:' + ringOn(bg) + (dim ? ';opacity:.22' : '') + '">' +
           '<span class="m">' + esc(m.label) + '</span><span class="v">' + esc(c.value) + '</span></div>';
       });
 
       h += '</div><div class="psum">';
       Object.keys(tally).sort(function (a, b) { return tally[b] - tally[a]; }).forEach(function (k) {
         var col = catColor(k);
-        h += '<span class="s" style="background:' + col + ';color:' + inkOn(col) + '">' +
-          esc(k) + ' ' + tally[k] + ' 月</span>';
+        h += '<span class="s" style="background:' + col + ';color:' + inkOn(col) +
+          ';border-color:' + ringOn(col) + '">' + esc(k) + ' ' + tally[k] + ' 月</span>';
       });
       h += '</div></div>';
     });
@@ -548,7 +559,8 @@
     catKeys.forEach(function (k) {
       var col = catColor(k);
       h += '<div class="bar"><span class="bt">' + esc(k) + '</span>' +
-        '<span class="bw"><i class="bf" style="width:' + (catTotal[k] / maxCat * 100) + '%;background:' + col + '"></i></span>' +
+        '<span class="bw"><i class="bf" style="width:' + (catTotal[k] / maxCat * 100) + '%;background:' + col +
+        ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '"></i></span>' +
         '<span class="bn">' + catTotal[k] + ' 人月</span></div>';
     });
     h += '</div>';
@@ -564,7 +576,8 @@
         catKeys.forEach(function (k) {
           if (!b[k]) return;
           var col = catColor(k);
-          h += '<i style="width:' + (b[k] / tot * 100) + '%;background:' + col + '" title="' +
+          h += '<i style="width:' + (b[k] / tot * 100) + '%;background:' + col +
+            ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '" title="' +
             esc(m.label + ' ' + k + ' ' + b[k] + ' 人') + '"></i>';
         });
       }
@@ -578,7 +591,8 @@
     unitKeys.forEach(function (k) {
       var col = groupColor(k);
       h += '<div class="bar"><span class="bt">' + esc(k) + '</span>' +
-        '<span class="bw"><i class="bf" style="width:' + (unitTotal[k] / maxUnit * 100) + '%;background:' + col + '"></i></span>' +
+        '<span class="bw"><i class="bf" style="width:' + (unitTotal[k] / maxUnit * 100) + '%;background:' + col +
+        ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '"></i></span>' +
         '<span class="bn">' + unitTotal[k] + ' 人月</span></div>';
     });
     h += '</div></div>';

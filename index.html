@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
 <!-- ?v= 是版本參數：改過 assets/ 裡的檔案就把這串一起改掉，
      瀏覽器才不會沿用舊快取。頁尾會顯示目前載入的版本。 -->
-<link rel="stylesheet" href="assets/style.css?v=2026-09-07.10">
+<link rel="stylesheet" href="assets/style.css?v=2026-09-07.11">
 </head>
 <body>
 
@@ -88,8 +88,9 @@
     尚未設定 <code>GAS_WEB_APP_URL</code> 時會顯示離線範例資料。
     表頭欄位固定為：長期導師、學年度、組別、期程、人事號、簡碼、受訓醫師，其後為各月份（<code>yyyy/mm</code>）。
     <br><b>顏色規則：</b>只看開頭字元，同科別顏色必定一致，不受試算表儲存格底色影響。
-    <code>內</code>黃、<code>外</code>綠、<code>婦</code>粉、<code>兒</code>咖啡、<code>急</code>藍、<code>老</code>紫、<code>選-</code>白，
-    其餘一律視為社區醫院（蒂芬妮綠）。例：<code>內(Y2不分)</code>、<code>內(外)</code>都是內科黃色；
+    <code>內</code>黃、<code>外</code>綠、<code>婦</code>粉、<code>兒</code>咖啡、<code>急</code>藍、<code>老</code>紫、
+    <code>兵</code>黑底白字、<code>選-</code>白，其餘一律視為社區醫院（紅）。
+    例：<code>內(Y2不分)</code>、<code>內(外)</code>都是內科黃色；
     <code>急-內</code> 開頭是「急」，歸急診藍色。
     <br><b>月份檢視分組：</b>依訓練單位合併，括號註記與連字號後綴會自動忽略 ——
     <code>內</code>、<code>內(Y2內)</code>、<code>內(Y2不分)</code> 併成同一張卡；
@@ -101,8 +102,8 @@
   <p class="foot">PGY 訓練課程表 · 前端以 Google Sheets 為單一資料來源<span id="build"></span></p>
 </main>
 
-<script src="assets/config.js?v=2026-09-07.10"></script>
-<script src="assets/sample-data.js?v=2026-09-07.10"></script>
-<script src="assets/app.js?v=2026-09-07.10"></script>
+<script src="assets/config.js?v=2026-09-07.11"></script>
+<script src="assets/sample-data.js?v=2026-09-07.11"></script>
+<script src="assets/app.js?v=2026-09-07.11"></script>
 </body>
 </html>
