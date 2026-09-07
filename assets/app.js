@@ -80,17 +80,24 @@
     return catColor(categoryOf(v));
   }
 
-  /* 去掉括號註記，取出「訓練單位」本體
-   *   內(Y2不分)、內(Y2內)、內  → 內
+  /* 取出「訓練單位」本體
+   *   內(Y2不分)、內(Y2內)、內  → 內      （括號一律視為註記）
    *   婦(完訓)、婦(Y2婦)、婦     → 婦
-   *   選-眼科                   → 選-眼科（連字號後面是實際去的單位，保留）
+   *   急、急-內、急-外           → 急      （急診不在 KEEP_SUFFIX_CATEGORIES）
+   *   選-眼科                   → 選-眼科  （選修在 KEEP_SUFFIX_CATEGORIES，後綴是實際單位）
    *   社-新樓                   → 社-新樓 */
   function baseUnit(v) {
     var s = String(v == null ? '' : v).trim();
+    if (!s) return '';
+
+    // 1) 去掉括號註記（半形與全形）
     var cut = s.search(/[（(]/);
-    if (cut < 0) return s;
-    var base = s.slice(0, cut).trim();
-    return base || s;               // 整串都是括號時，保留原文
+    var base = cut < 0 ? s : (s.slice(0, cut).trim() || s);
+
+    // 2) 除非該科別的後綴代表實際單位，否則連字號後面也視為註記
+    if ((CFG.KEEP_SUFFIX_CATEGORIES || []).indexOf(categoryOf(s)) >= 0) return base;
+    var dash = base.search(/[-–—－]/);
+    return dash > 0 ? base.slice(0, dash).trim() : base;
   }
 
   /* 月份檢視 / 統計的分組鍵
