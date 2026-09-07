@@ -15,7 +15,7 @@
     error: '',
     view: 'grid',
     monthIndex: 0,
-    filters: { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cats: {} },
+    filters: { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' },   // cat 為單選，'' = 全部
     hideEmptyMonths: true,
     focusPerson: ''
   };
@@ -236,7 +236,7 @@
   }
 
   function anyCatSelected() {
-    return Object.keys(state.filters.cats).some(function (k) { return state.filters.cats[k]; });
+    return !!state.filters.cat;
   }
 
   function rowMatches(r) {
@@ -254,7 +254,7 @@
     }
 
     if (anyCatSelected()) {
-      var hit = Object.keys(r.months).some(function (k) { return f.cats[r.months[k].cat]; });
+      var hit = Object.keys(r.months).some(function (k) { return r.months[k].cat === f.cat; });
       if (!hit) return false;
     }
     return true;
@@ -266,7 +266,7 @@
 
   /* 儲存格是否因科別篩選而變淡 */
   function cellDim(cell) {
-    return anyCatSelected() && !state.filters.cats[cell.cat];
+    return anyCatSelected() && cell.cat !== state.filters.cat;
   }
 
   /* ============================== 畫面 ============================== */
@@ -325,7 +325,7 @@
     $('#chips').innerHTML = catsInUse().map(function (c) {
       var col = catColor(c.name);
       // title 保留人月數，滑鼠停留才顯示，chip 上不放數字
-      return '<button class="chip' + (f.cats[c.name] ? ' on' : '') + '" data-cat="' + esc(c.name) + '"' +
+      return '<button class="chip' + (f.cat === c.name ? ' on' : '') + '" data-cat="' + esc(c.name) + '"' +
         ' title="' + esc(c.name + '　' + c.n + ' 人月') + '">' +
         '<i class="sw" style="background:' + col + '"></i>' + esc(c.name) + '</button>';
     }).join('') || '<span style="color:var(--ink-3);font-size:12.5px">尚無課程資料</span>';
@@ -397,7 +397,7 @@
     rows.forEach(function (r) {
       var c = r.months[m.key];
       if (!c) return;
-      if (anyCatSelected() && !state.filters.cats[c.cat]) return;
+      if (anyCatSelected() && c.cat !== state.filters.cat) return;
       var k = groupKeyOf(c);
       (buckets[k] = buckets[k] || []).push({ row: r, value: c.value });
     });
@@ -697,7 +697,7 @@
     $('#f-empty').addEventListener('change', function (e) { state.hideEmptyMonths = e.target.checked; render(); });
 
     $('#btn-reset').addEventListener('click', function () {
-      state.filters = { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cats: {} };
+      state.filters = { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' };
       state.focusPerson = '';
       $('#f-q').value = '';
       render();
@@ -707,7 +707,7 @@
       var b = e.target.closest('[data-cat]');
       if (!b) return;
       var k = b.dataset.cat;
-      state.filters.cats[k] = !state.filters.cats[k];
+      state.filters.cat = (state.filters.cat === k) ? '' : k;   // 單選；點已選的那個等於取消
       render();
     });
 
