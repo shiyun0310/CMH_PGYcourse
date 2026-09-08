@@ -121,13 +121,8 @@
     var base = cut < 0 ? s : (s.slice(0, cut).trim() || s);
 
     // 2) 除非該科別的後綴代表實際單位，否則連字號後面也視為註記
-    var cat = categoryOf(s);
+    if ((CFG.KEEP_SUFFIX_CATEGORIES || []).indexOf(categoryOf(s)) >= 0) return base;
     var dash = base.search(/[-–—－]/);
-    if ((CFG.KEEP_SUFFIX_CATEGORIES || []).indexOf(cat) >= 0) {
-      // 社內-郭綜、社外-郭綜 → 社-郭綜：連字號前面只是次分組，同一家醫院併成一張卡
-      var merge = (CFG.UNIT_MERGE_PREFIX || {})[cat];
-      return (merge && dash > 0) ? merge + base.slice(dash) : base;
-    }
     return dash > 0 ? base.slice(0, dash).trim() : base;
   }
 
@@ -162,12 +157,13 @@
     var seen = {}, out = [];
     (state.data ? state.data.rows : []).forEach(function (r) {
       Object.keys(r.months).forEach(function (k) {
-        var u = groupKeyOf(r.months[k]);
+        var u = filterKeyOf(groupKeyOf(r.months[k]));
         if (u && !seen[u]) { seen[u] = 1; out.push(u); }
       });
     });
     (CFG.MONTH_UNIT_CHOICES || []).forEach(function (u) {
-      if (u && !seen[u]) { seen[u] = 1; out.push(u); }
+      var f = filterKeyOf(u);
+      if (f && !seen[f]) { seen[f] = 1; out.push(f); }
     });
 
     // 排序：先依科別（CATEGORY_COLORS 的順序），
@@ -184,6 +180,17 @@
       if (d) return d;
       return a.localeCompare(b, 'zh-Hant');
     });
+  }
+
+  /* 篩選按鈕用的鍵：把社區的次分組前綴收斂成同一家醫院。
+   *   社-郭綜／社內-郭綜／社外-郭綜／社婦-郭綜 → 篩選鍵都是「社-郭綜」
+   * 合併只發生在按鈕與比對上，卡片仍依實際單位分開顯示。 */
+  function filterKeyOf(unit) {
+    var u = String(unit == null ? '' : unit).trim();
+    var merge = (CFG.FILTER_MERGE_PREFIX || {})[categoryOf(u)];
+    if (!merge) return u;
+    var dash = u.search(/[-–—－]/);
+    return dash > 0 ? merge + u.slice(dash) : u;
   }
 
   function selectedUnits() {
@@ -512,7 +519,7 @@
 
     var picked = selectedUnits();
     var keys = Object.keys(buckets).filter(function (k) {
-      return !picked.length || state.monthUnits[k];
+      return !picked.length || state.monthUnits[filterKeyOf(k)];
     }).sort(function (a, b) {
       return buckets[b].length - buckets[a].length || a.localeCompare(b, 'zh-Hant');
     });
