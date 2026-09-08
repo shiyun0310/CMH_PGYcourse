@@ -10,7 +10,7 @@
   office.html — 純資料版
   保留頁首與總覽表／月份檢視／個人時程三個頁籤，
   不放篩選列與頁尾，適合以 iframe 嵌入其他系統或內部網頁。
-  整體採黃色系（index.html 為粉色系），兩頁一眼分得出來。
+  整體採萊姆綠系（index.html 為粉色系），兩頁一眼分得出來。
 
   · 與 index.html 共用 assets/ 底下同一份 config.js / app.js / style.css，
     改任何一邊的功能兩頁都會同步，不需要維護兩份程式。
@@ -20,24 +20,24 @@
     少了它，使用者會把範例資料誤當成正式課表。
   · ?v= 是版本參數，改過 assets/ 內容要一併更新，否則瀏覽器會用舊快取。
 -->
-<link rel="stylesheet" href="assets/style.css?v=2026-09-08.2">
+<link rel="stylesheet" href="assets/style.css?v=2026-09-08.3">
 </head>
 <body class="office">
 
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <svg class="mark" viewBox="0 0 48 44" role="img" aria-label="PGY">
+      <svg class="mark" viewBox="3 -1.5 42 41" role="img" aria-label="PGY">
         <defs>
           <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#FFF6D8"/>
-            <stop offset="1" stop-color="#FFD24A"/>
+            <stop offset="0" stop-color="#FCFFF2"/>
+            <stop offset="1" stop-color="#DFF29B"/>
           </linearGradient>
         </defs>
         <path d="M24.00 0.00 29.76 13.07 43.97 14.51 33.32 24.03 36.34 37.99 24.00 30.80 11.66 37.99 14.68 24.03 4.03 14.51 18.24 13.07Z"
-              fill="url(#sg)" stroke="rgba(90,60,0,.22)" stroke-width="1" stroke-linejoin="round"/>
+              fill="url(#sg)" stroke="rgba(45,65,0,.26)" stroke-width="1" stroke-linejoin="round"/>
         <text x="24" y="22" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif"
-              font-size="10" font-weight="800" letter-spacing="-.4" fill="#5A3C00">PGY</text>
+              font-size="10" font-weight="800" letter-spacing="-.4" fill="#35470A">PGY</text>
       </svg>
       <div>
         <h1 id="title">PGY 訓練課程表</h1>
@@ -64,8 +64,8 @@
   <section class="panel view" id="view"></section>
 </main>
 
-<script src="assets/config.js?v=2026-09-08.2"></script>
-<script src="assets/sample-data.js?v=2026-09-08.2"></script>
-<script src="assets/app.js?v=2026-09-08.2"></script>
+<script src="assets/config.js?v=2026-09-08.3"></script>
+<script src="assets/sample-data.js?v=2026-09-08.3"></script>
+<script src="assets/app.js?v=2026-09-08.3"></script>
 </body>
 </html>

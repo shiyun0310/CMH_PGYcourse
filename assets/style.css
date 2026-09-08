@@ -330,55 +330,60 @@ table.grid td.q1{border-left:2px solid var(--line)}
    深色模式要另外寫一組：[data-theme="dark"] 定義在 :root，
    若只寫 body.office 的淺色版，會反過來蓋掉深色模式的色票。 */
 body.office{
-  --bg:#FCF8EE;
-  --panel-2:#FDFBF4;
-  --line:#EFE4CB;
-  --line-2:#F7F0DE;
-  --brand:#8A6100;
-  --brand-2:#A87400;
-  --brand-soft:#FFF4D6;
-  --shadow:0 1px 2px rgba(80,60,10,.06),0 8px 24px rgba(80,60,10,.09);
+  --bg:#F8FBEE;
+  --panel-2:#FBFDF5;
+  --line:#E4EDCB;
+  --line-2:#F1F6E2;
+  --brand:#4A6300;
+  --brand-2:#6B8C00;
+  --brand-soft:#F1F8D8;
+  --shadow:0 1px 2px rgba(50,70,10,.06),0 8px 24px rgba(50,70,10,.09);
 }
 [data-theme="dark"] body.office{
-  --bg:#161208;
-  --panel:#241d0f;
-  --panel-2:#2c2413;
-  --ink:#f6efdd;
-  --ink-2:#c9b892;
-  --ink-3:#9a8a68;
-  --line:#3d3320;
-  --line-2:#322a1a;
-  --brand:#F0C24A;
-  --brand-2:#F7D477;
-  --brand-soft:#3B2F14;
+  --bg:#10160A;
+  --panel:#1B2312;
+  --panel-2:#212B16;
+  --ink:#eef4e2;
+  --ink-2:#b6c49c;
+  --ink-3:#879470;
+  --line:#313d22;
+  --line-2:#28321b;
+  --brand:#C2DE4E;
+  --brand-2:#D3E979;
+  --brand-soft:#2C3A16;
 }
 
-/* 亮黃底配白字只有 1.9:1，完全看不清楚，所以標題列一律改用深褐色文字 */
+/* 亮萊姆綠底配白字只有 1.7:1，完全看不清楚，所以標題列一律改用深橄欖綠文字 */
 body.office .top{
-  background:linear-gradient(135deg,#F5C542 0%,#E8A81C 55%,#D18F00 100%);
-  color:#3A2600;
+  background:linear-gradient(135deg,#C6E33F 0%,#B4D62B 55%,#96B814 100%);
+  color:#24310A;
 }
 [data-theme="dark"] body.office .top{
-  background:linear-gradient(135deg,#8A6408 0%,#6B4C05 60%,#4E3703 100%);
-  color:#fff8e6;
+  background:linear-gradient(135deg,#5C7A0E 0%,#465D08 60%,#334304 100%);
+  color:#f2f8e2;
 }
-body.office .brand p{color:rgba(58,38,0,.84)}   /* .74 混色後只有 4.0:1，提高到 .84 得 5.0:1 */
-[data-theme="dark"] body.office .brand p{color:rgba(255,248,230,.78)}
+body.office .brand p{color:rgba(36,49,10,.88)}   /* .84 在漸層最深端只有 4.44:1，.88 才全段 ≥4.8:1 */
+[data-theme="dark"] body.office .brand p{color:rgba(242,248,226,.80)}
 
-body.office .pill{background:rgba(255,255,255,.34);border-color:rgba(58,38,0,.22);color:#3A2600}
-body.office .btn.ghost{background:rgba(255,255,255,.34);border-color:rgba(58,38,0,.24);color:#3A2600}
-body.office .btn.ghost:hover{background:rgba(255,255,255,.62);border-color:rgba(58,38,0,.42);color:#3A2600}
-body.office .pill .dot{background:#2f7d52}
-body.office .pill.is-sample .dot{background:#a9700a}
-body.office .pill.is-error .dot{background:#b3261e}
-body.office .pill.is-loading .dot{background:#3A2600}
+body.office .pill{background:rgba(255,255,255,.38);border-color:rgba(36,49,10,.22);color:#24310A}
+body.office .btn.ghost{background:rgba(255,255,255,.38);border-color:rgba(36,49,10,.24);color:#24310A}
+body.office .btn.ghost:hover{background:rgba(255,255,255,.66);border-color:rgba(36,49,10,.42);color:#24310A}
+body.office .pill .dot{background:#1d6b41}
+body.office .pill.is-sample .dot{background:#9a6a00}
+body.office .pill.is-error .dot{background:#a81f18}
+body.office .pill.is-loading .dot{background:#24310A}
 
 [data-theme="dark"] body.office .pill,
 [data-theme="dark"] body.office .btn.ghost{
-  background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.24);color:#fff8e6;
+  background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.24);color:#f2f8e2;
 }
-[data-theme="dark"] body.office .btn.ghost:hover{background:rgba(255,255,255,.22);color:#fff8e6}
-[data-theme="dark"] body.office .pill .dot{background:#8fd3b0}
+[data-theme="dark"] body.office .btn.ghost:hover{background:rgba(255,255,255,.22);color:#f2f8e2}
+[data-theme="dark"] body.office .pill .dot{background:#a8e0b8}
+
+/* 星星放大：viewBox 收緊到星形的外框（原本下方有一段空白），
+   再把 .mark 尺寸調大，實際看到的星星才會明顯變大 */
+body.office .brand .mark{width:58px;height:55px}
+@media (max-width:720px){ body.office .brand .mark{width:50px;height:47px} }
 
 /* ---------- office.html：版面 ---------- */
 
