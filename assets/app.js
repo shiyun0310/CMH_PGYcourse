@@ -136,6 +136,23 @@
     return CFG.MONTH_GROUP_BY === 'category' ? catColor(key) : valueColor(key);
   }
 
+  /* 月份卡片裡名字旁的小標籤。卡片標題已經寫明科別，標籤不必再重複一次：
+   *   在「外」卡片   外(Y2不分)   → (Y2不分)      去掉重複的「外」
+   *   在「急」卡片   急(完訓)     → (完訓)
+   *   在「急」卡片   急-外        → 急-外         連字號後面是實際去的次專科，
+   *   在「急」卡片   急-外(完訓)  → 急-外(完訓)   要看得出是 急-外 還是 急-內，整串保留
+   * 判斷方式：去掉組名後若緊接著括號，那就只是註記，可以省略組名；
+   * 若緊接著連字號（或其他字），代表是不同的訓練單位，保留原文。 */
+  function noteFor(value, key) {
+    var v = String(value == null ? '' : value);
+    if (v === key) return '';                         // 與組名完全相同，不用標
+    if (v.indexOf(key) === 0) {
+      var rest = v.slice(key.length);
+      if (/^[（(]/.test(rest)) return rest;           // 外(Y2不分) → (Y2不分)
+    }
+    return v;                                          // 急-外、急-外(完訓) 保留全名
+  }
+
   function colorOf(cell) {
     if (CFG.COLOR_SOURCE === 'sheets' &&
         cell && cell.color && /^#[0-9a-f]{6}$/i.test(cell.color)) return cell.color;
@@ -466,8 +483,8 @@
         if (d) return d;
         return String(a.row['受訓醫師']).localeCompare(String(b.row['受訓醫師']), 'zh-Hant');
       }).forEach(function (it) {
-        // 原始寫法與分組名不同時（例：內(Y2不分) 併進「內」），把註記顯示出來
-        var note = it.value === k ? '' : '<i class="vtag">' + esc(it.value) + '</i>';
+        var tag = noteFor(it.value, k);
+        var note = tag ? '<i class="vtag">' + esc(tag) + '</i>' : '';
         h += '<li><i class="pid">' + esc(it.row['人事號'] || '—') + '</i>' +
           '<b>' + esc(it.row['受訓醫師']) + '</b>' + note +
           '<span>' + esc([it.row['期程'], it.row['簡碼']].filter(Boolean).join('・')) + '</span></li>';
