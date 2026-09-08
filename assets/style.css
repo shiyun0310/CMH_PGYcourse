@@ -330,40 +330,57 @@ table.grid td.q1{border-left:2px solid var(--line)}
    深色模式要另外寫一組：[data-theme="dark"] 定義在 :root，
    若只寫 body.office 的淺色版，會反過來蓋掉深色模式的色票。 */
 body.office{
-  --bg:#FDF7F1;
-  --panel-2:#FFFBF7;
-  --line:#F0E2D3;
-  --line-2:#F8F0E7;
-  --brand:#A8410A;
-  --brand-2:#C05008;
-  --brand-soft:#FDEBDC;
-  --shadow:0 1px 2px rgba(90,45,10,.06),0 8px 24px rgba(90,45,10,.09);
+  --bg:#FFF8F1;
+  --panel-2:#FFFCF8;
+  --line:#F7E3CE;
+  --line-2:#FDF1E4;
+  --brand:#C2410C;
+  --brand-2:#EA580C;
+  --brand-soft:#FFEBD6;
+  --shadow:0 1px 2px rgba(120,60,10,.07),0 8px 24px rgba(120,60,10,.10);
 }
 [data-theme="dark"] body.office{
-  --bg:#1A1109;
-  --panel:#271A10;
-  --panel-2:#2F2115;
-  --ink:#f7ece2;
-  --ink-2:#cbb09b;
-  --ink-3:#9c8271;
-  --line:#3f2d1f;
-  --line-2:#342418;
-  --brand:#F2A86A;
-  --brand-2:#F7C094;
-  --brand-soft:#3A2416;
+  --bg:#1C1208;
+  --panel:#2A1C0E;
+  --panel-2:#332312;
+  --ink:#fbeee0;
+  --ink-2:#d4b394;
+  --ink-3:#a4866a;
+  --line:#463020;
+  --line-2:#3a2718;
+  --brand:#FFA94D;
+  --brand-2:#FFC078;
+  --brand-soft:#42280F;
 }
 
-/* 橘色夠深，白字對漸層最亮端仍有 4.77:1，因此沿用預設的白字頁首；
-   先前為了亮黃／亮萊姆而加的深色文字、深色按鈕覆寫全部不需要了。 */
+/* 鮮豔的橘色亮度高，白字最多只有 2.4:1 完全看不見；
+   要壓到白字達標就得暗到接近鏽紅，整條看起來死氣沉沉。
+   所以這裡走「鮮豔橘底 + 深棕文字」，四段漸層讓顏色有流動感。 */
 body.office .top{
-  background:linear-gradient(135deg,#B84C07 0%,#A04206 55%,#883404 100%);
+  background:linear-gradient(120deg,#FFB347 0%,#FF9A3C 30%,#FB8500 65%,#F26B0A 100%);
+  color:#4A1D00;
 }
-/* 預設副標是 rgba(255,255,255,.82)，混色後在漸層最亮端只有 3.75:1，
-   橘色比粉色亮一些，所以這裡調高到 .95 才有 4.82:1 */
-body.office .brand p{color:rgba(255,255,255,.95)}
+body.office .brand p{color:#4A1D00}   /* 半透明在漸層最深端只有 3.8:1；
+                                          不透明才全段 ≥4.69:1，層次靠字級與粗細區分 */
+body.office .pill{background:rgba(255,255,255,.42);border-color:rgba(74,29,0,.20);color:#4A1D00}
+body.office .btn.ghost{background:rgba(255,255,255,.42);border-color:rgba(74,29,0,.22);color:#4A1D00}
+body.office .btn.ghost:hover{background:rgba(255,255,255,.72);border-color:rgba(74,29,0,.40);color:#4A1D00}
+body.office .pill .dot{background:#146c43}
+body.office .pill.is-sample .dot{background:#8a5a00}
+body.office .pill.is-error .dot{background:#9e1c14}
+body.office .pill.is-loading .dot{background:#4A1D00}
+
 [data-theme="dark"] body.office .top{
-  background:linear-gradient(135deg,#8A3A08 0%,#6B2C05 60%,#4E2003 100%);
+  background:linear-gradient(120deg,#C2540A 0%,#B04705 45%,#8E3704 100%);
+  color:#fff3e4;
 }
+[data-theme="dark"] body.office .brand p{color:rgba(255,243,228,.84)}
+[data-theme="dark"] body.office .pill,
+[data-theme="dark"] body.office .btn.ghost{
+  background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.26);color:#fff3e4;
+}
+[data-theme="dark"] body.office .btn.ghost:hover{background:rgba(255,255,255,.24);color:#fff3e4}
+[data-theme="dark"] body.office .pill .dot{background:#8fd3b0}
 
 /* 星星放大：viewBox 收緊到星形的外框（原本下方有一段空白），
    再把 .mark 尺寸調大，實際看到的星星才會明顯變大 */
