@@ -10,7 +10,7 @@
 
 ```
 index.html                 主頁面（完整版）
-office.html                純資料版：只有三個頁籤與內容，適合 iframe 嵌入
+office.html                辦公室版：頁首＋三個頁籤，黃色系，適合 iframe 嵌入
 check.html                 GAS 連線檢測頁（串接後先開這頁確認）
 assets/config.js           ★ 唯一需要修改的設定檔（GAS 網址、色票）
 assets/style.css           樣式（含深色模式、列印樣式）
@@ -217,10 +217,10 @@ AUTO_REFRESH_MS: 0,         // 想自動同步就設 300000（5 分鐘）
 月份卡片的最小寬度用 `minmax(min(310px,100%),1fr)`，
 小螢幕不會被 `.view` 的 `overflow:hidden` 裁掉。
 
-## 七、純資料版 office.html
+## 七、辦公室版 office.html
 
-`office.html` 只保留**總覽表／月份檢視／個人時程**三個頁籤與其內容，
-不放頁首、篩選列、頁尾，適合用 `<iframe>` 嵌到其他系統或內部網頁：
+`office.html` 保留頁首與**總覽表／月份檢視／個人時程**三個頁籤，
+不放篩選列與頁尾，適合用 `<iframe>` 嵌到其他系統或內部網頁：
 
 ```html
 <iframe src="office.html" style="width:100%;height:640px;border:0"></iframe>
@@ -234,6 +234,23 @@ AUTO_REFRESH_MS: 0,         // 想自動同步就設 300000（5 分鐘）
 - 佈景沿用使用者在 `index.html` 選過的深／淺色設定（存在 `localStorage`）
 - 仍保留錯誤提示區塊：正常連線時完全看不到，只有在讀不到 Google Sheets、
   退回離線範例資料時才會顯示警告 —— 少了它，使用者會把範例資料誤當成正式課表
+
+### 配色
+
+| | index.html | office.html |
+|---|---|---|
+| 色系 | 玫瑰粉 | 黃／金 |
+| 標誌 | 白粉漸層愛心 | 黃色星星 |
+| 標題列文字 | 白 | 深褐 `#3A2600` |
+
+亮黃底配白字只有 **1.9:1**，完全看不清楚，所以 office 的標題列一律改用深褐色文字
+（對漸層三個色階分別為 8.89 / 6.90 / 5.24，皆達 WCAG AA）；
+副標的透明度也從 .74 提高到 .84，混色後才有 5.0:1。
+
+色票直接覆寫在 `body.office` 上，所以整頁（含表格、分頁、連結）一起換色。
+深色模式另外寫了一組 `[data-theme="dark"] body.office` ——
+`[data-theme="dark"]` 定義在 `:root`，若只寫 `body.office` 的淺色版，
+會因為定義在較內層而反過來蓋掉深色模式的色票。
 
 ## 八、網頁功能
 

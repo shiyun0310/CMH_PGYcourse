@@ -324,12 +324,69 @@ table.grid td.q1{border-left:2px solid var(--line)}
   .mcard li .pid{min-width:52px}
 }
 
-/* ---------- office.html：純資料版 ---------- */
+/* ---------- office.html：黃色系 ---------- */
+/* index.html 是粉色系，office.html 走黃色系，兩頁一眼分得出來。
+   色票直接覆寫在 body.office 上，所以整頁（含表格、分頁、連結）一起換色。
+   深色模式要另外寫一組：[data-theme="dark"] 定義在 :root，
+   若只寫 body.office 的淺色版，會反過來蓋掉深色模式的色票。 */
+body.office{
+  --bg:#FCF8EE;
+  --panel-2:#FDFBF4;
+  --line:#EFE4CB;
+  --line-2:#F7F0DE;
+  --brand:#8A6100;
+  --brand-2:#A87400;
+  --brand-soft:#FFF4D6;
+  --shadow:0 1px 2px rgba(80,60,10,.06),0 8px 24px rgba(80,60,10,.09);
+}
+[data-theme="dark"] body.office{
+  --bg:#161208;
+  --panel:#241d0f;
+  --panel-2:#2c2413;
+  --ink:#f6efdd;
+  --ink-2:#c9b892;
+  --ink-3:#9a8a68;
+  --line:#3d3320;
+  --line-2:#322a1a;
+  --brand:#F0C24A;
+  --brand-2:#F7D477;
+  --brand-soft:#3B2F14;
+}
+
+/* 亮黃底配白字只有 1.9:1，完全看不清楚，所以標題列一律改用深褐色文字 */
+body.office .top{
+  background:linear-gradient(135deg,#F5C542 0%,#E8A81C 55%,#D18F00 100%);
+  color:#3A2600;
+}
+[data-theme="dark"] body.office .top{
+  background:linear-gradient(135deg,#8A6408 0%,#6B4C05 60%,#4E3703 100%);
+  color:#fff8e6;
+}
+body.office .brand p{color:rgba(58,38,0,.84)}   /* .74 混色後只有 4.0:1，提高到 .84 得 5.0:1 */
+[data-theme="dark"] body.office .brand p{color:rgba(255,248,230,.78)}
+
+body.office .pill{background:rgba(255,255,255,.34);border-color:rgba(58,38,0,.22);color:#3A2600}
+body.office .btn.ghost{background:rgba(255,255,255,.34);border-color:rgba(58,38,0,.24);color:#3A2600}
+body.office .btn.ghost:hover{background:rgba(255,255,255,.62);border-color:rgba(58,38,0,.42);color:#3A2600}
+body.office .pill .dot{background:#2f7d52}
+body.office .pill.is-sample .dot{background:#a9700a}
+body.office .pill.is-error .dot{background:#b3261e}
+body.office .pill.is-loading .dot{background:#3A2600}
+
+[data-theme="dark"] body.office .pill,
+[data-theme="dark"] body.office .btn.ghost{
+  background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.24);color:#fff8e6;
+}
+[data-theme="dark"] body.office .btn.ghost:hover{background:rgba(255,255,255,.22);color:#fff8e6}
+[data-theme="dark"] body.office .pill .dot{background:#8fd3b0}
+
+/* ---------- office.html：版面 ---------- */
+
 /* 沒有頁首與篩選列，表格可用的垂直空間變多；
    這些規則放在響應式區塊之後，才能蓋掉前面的 .tscroll 高度。 */
-body.office .wrap{padding-top:14px}
+body.office .wrap{padding-top:16px}
 body.office .tabs{margin-top:0}
-body.office .tscroll{max-height:calc(100vh - 118px)}
+body.office .tscroll{max-height:calc(100vh - 196px)}
 @media (max-width:720px){
   body.office .wrap{padding-top:12px}
   body.office .tscroll{max-height:80vh}
