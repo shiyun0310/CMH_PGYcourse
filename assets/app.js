@@ -23,6 +23,19 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 
+  /* office.html 是純資料版，沒有頁首、篩選列與頁尾。
+   * 以下兩個小工具讓同一支 app.js 能同時服務兩種外殼：
+   * 元素不存在就安靜跳過，而不是丟 TypeError 讓整頁掛掉。 */
+  function on(sel, evt, fn) {
+    var el = $(sel);
+    if (el) el.addEventListener(evt, fn);
+  }
+  function withEl(sel, fn) {
+    var el = $(sel);
+    if (el) fn(el);
+    return el;
+  }
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -276,6 +289,7 @@
 
   function renderStatus() {
     var el = $('#status');
+    if (!el) return;
     var cls = 'pill', txt = '';
     if (state.source === 'loading') { cls += ' is-loading'; txt = '讀取中…'; }
     else if (state.source === 'sheets') { txt = 'Google Sheets 已連線'; }
@@ -287,6 +301,7 @@
 
   function renderBanner() {
     var box = $('#banner');
+    if (!box) return;
     if (state.error) {
       box.innerHTML = '<div class="banner err"><span>⚠</span><div>' + esc(state.error) +
         '　目前顯示的是 <b>assets/sample-data.js</b> 的離線範例資料。</div></div>';
@@ -300,10 +315,12 @@
   }
 
   function renderFilters() {
+    if (!$('#chips')) return;              // 純資料版沒有篩選列
     var d = state.data, f = state.filters;
 
     function fillSel(id, values, cur) {
       var sel = $(id);
+      if (!sel) return;
       var opts = ['<option value="">全部</option>'].concat(values.map(function (v) {
         return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(v) + '</option>';
       }));
@@ -316,7 +333,8 @@
     fillSel('#f-mentor', uniq(d.rows.map(function (r) { return r['長期導師']; })).sort(), f['長期導師']);
 
     var sheetSel = $('#f-sheet');
-    if (state.sheets.length) {
+    if (!sheetSel) { /* 純資料版沒有工作表下拉 */ }
+    else if (state.sheets.length) {
       sheetSel.parentNode.style.display = '';
       sheetSel.innerHTML = state.sheets.map(function (s) {
         return '<option value="' + esc(s) + '"' + (s === d.sheet ? ' selected' : '') + '>' + esc(s) + '</option>';
@@ -644,31 +662,31 @@
 
   /* ------------------------------------------------------------ 事件 */
   function bind() {
-    $('#btn-refresh').addEventListener('click', function () {
+    on('#btn-refresh', 'click', function () {
       load(state.data ? state.data.sheet : '');
     });
 
-    $('#btn-theme').addEventListener('click', function () {
+    on('#btn-theme', 'click', function () {
       var cur = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', cur);
       try { localStorage.setItem('pgy-theme', cur); } catch (e) {}
     });
 
-    $('#f-q').addEventListener('input', function (e) { state.filters.q = e.target.value.trim(); render(); });
+    on('#f-q', 'input', function (e) { state.filters.q = e.target.value.trim(); render(); });
     ['year:學年度', 'stage:期程', 'group:組別', 'mentor:長期導師'].forEach(function (pair) {
       var p = pair.split(':');
-      $('#f-' + p[0]).addEventListener('change', function (e) { state.filters[p[1]] = e.target.value; render(); });
+      on('#f-' + p[0], 'change', function (e) { state.filters[p[1]] = e.target.value; render(); });
     });
-    $('#f-sheet').addEventListener('change', function (e) { load(e.target.value); });
+    on('#f-sheet', 'change', function (e) { load(e.target.value); });
 
-    $('#btn-reset').addEventListener('click', function () {
+    on('#btn-reset', 'click', function () {
       state.filters = { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' };
       state.personQuery = '';
-      $('#f-q').value = '';
+      withEl('#f-q', function (el) { el.value = ''; });
       render();
     });
 
-    $('#chips').addEventListener('click', function (e) {
+    on('#chips', 'click', function (e) {
       var b = e.target.closest('[data-cat]');
       if (!b) return;
       var k = b.dataset.cat;
@@ -676,14 +694,14 @@
       render();
     });
 
-    $('#tabs').addEventListener('click', function (e) {
+    on('#tabs', 'click', function (e) {
       var t = e.target.closest('.tab');
       if (!t) return;
       state.view = t.dataset.view;
       render();
     });
 
-    $('#view').addEventListener('click', function (e) {
+    on('#view', 'click', function (e) {
       var p = e.target.closest('[data-person]');
       if (p) { state.personQuery = p.dataset.person; state.view = 'person'; render(); return; }
       if (e.target.id === 'p-clear') { state.personQuery = ''; render(); return; }
@@ -693,12 +711,12 @@
       if (e.target.id === 'm-next') { state.monthIndex = state.monthIndex + 1; render(); return; }
     });
 
-    $('#view').addEventListener('change', function (e) {
+    on('#view', 'change', function (e) {
       if (e.target.id === 'm-pick') { state.monthIndex = Number(e.target.value); render(); }
     });
 
     // #view 每次都整段重繪，輸入框會被換掉，所以重繪後要把焦點與游標位置還原
-    $('#view').addEventListener('input', function (e) {
+    on('#view', 'input', function (e) {
       if (e.target.id !== 'p-q') return;
       var pos = e.target.selectionStart;
       state.personQuery = e.target.value;
@@ -722,10 +740,10 @@
     // 從自己的 script src 取出 ?v=，顯示在頁尾；版本只維護 index.html 一處
     var me = document.querySelector('script[src*="app.js"]');
     var ver = me && (me.getAttribute('src').split('v=')[1] || '');
-    if (ver) $('#build').textContent = '　·　版本 ' + ver;
+    if (ver) withEl('#build', function (el) { el.textContent = '　·　版本 ' + ver; });
 
-    $('#title').textContent = CFG.TITLE || 'PGY 訓練課程表';
-    $('#subtitle').textContent = CFG.SUBTITLE || '';
+    withEl('#title', function (el) { el.textContent = CFG.TITLE || 'PGY 訓練課程表'; });
+    withEl('#subtitle', function (el) { el.textContent = CFG.SUBTITLE || ''; });
     document.title = CFG.TITLE || 'PGY 訓練課程表';
 
     bind();

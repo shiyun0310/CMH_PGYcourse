@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PGY 訓練課程表</title>
+<meta name="description" content="PGY 輪訓課程表純資料版，供內部網頁嵌入使用。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
+<!--
+  office.html — 純資料版
+  只保留總覽表／月份檢視／個人時程三個頁籤與其內容，
+  頁首、篩選列、頁尾一律不放，適合以 iframe 嵌入其他系統或內部網頁。
+
+  · 與 index.html 共用 assets/ 底下同一份 config.js / app.js / style.css，
+    改任何一邊的功能兩頁都會同步，不需要維護兩份程式。
+  · app.js 對不存在的介面元素會安靜跳過，所以這裡少掉的元素不會讓程式出錯。
+  · 保留 #banner：正常連線時它是空的完全看不到，
+    只有在讀不到 Google Sheets、退回離線範例資料時才會顯示警告 ——
+    少了它，使用者會把範例資料誤當成正式課表。
+  · ?v= 是版本參數，改過 assets/ 內容要一併更新，否則瀏覽器會用舊快取。
+-->
+<link rel="stylesheet" href="assets/style.css?v=2026-09-08.1">
+</head>
+<body class="office">
+
+<main class="wrap">
+  <div id="banner"></div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-view="grid">總覽表</button>
+    <button class="tab" data-view="month">月份檢視</button>
+    <button class="tab" data-view="person">個人時程</button>
+  </nav>
+
+  <section class="panel view" id="view"></section>
+</main>
+
+<script src="assets/config.js?v=2026-09-08.1"></script>
+<script src="assets/sample-data.js?v=2026-09-08.1"></script>
+<script src="assets/app.js?v=2026-09-08.1"></script>
+</body>
+</html>

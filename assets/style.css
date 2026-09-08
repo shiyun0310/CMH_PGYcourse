@@ -323,3 +323,18 @@ table.grid td.q1{border-left:2px solid var(--line)}
   .pcard header .pn{font-size:15px}
   .mcard li .pid{min-width:52px}
 }
+
+/* ---------- office.html：純資料版 ---------- */
+/* 沒有頁首與篩選列，表格可用的垂直空間變多；
+   這些規則放在響應式區塊之後，才能蓋掉前面的 .tscroll 高度。 */
+body.office .wrap{padding-top:14px}
+body.office .tabs{margin-top:0}
+body.office .tscroll{max-height:calc(100vh - 118px)}
+@media (max-width:720px){
+  body.office .wrap{padding-top:12px}
+  body.office .tscroll{max-height:80vh}
+}
+@media (max-width:520px){
+  body.office .wrap{padding-top:10px}
+  body.office .tscroll{max-height:82vh}
+}

@@ -9,7 +9,8 @@
 ## 一、檔案結構
 
 ```
-index.html                 主頁面
+index.html                 主頁面（完整版）
+office.html                純資料版：只有三個頁籤與內容，適合 iframe 嵌入
 check.html                 GAS 連線檢測頁（串接後先開這頁確認）
 assets/config.js           ★ 唯一需要修改的設定檔（GAS 網址、色票）
 assets/style.css           樣式（含深色模式、列印樣式）
@@ -216,7 +217,25 @@ AUTO_REFRESH_MS: 0,         // 想自動同步就設 300000（5 分鐘）
 月份卡片的最小寬度用 `minmax(min(310px,100%),1fr)`，
 小螢幕不會被 `.view` 的 `overflow:hidden` 裁掉。
 
-## 七、網頁功能
+## 七、純資料版 office.html
+
+`office.html` 只保留**總覽表／月份檢視／個人時程**三個頁籤與其內容，
+不放頁首、篩選列、頁尾，適合用 `<iframe>` 嵌到其他系統或內部網頁：
+
+```html
+<iframe src="office.html" style="width:100%;height:640px;border:0"></iframe>
+```
+
+- 與 `index.html` **共用** `assets/` 底下同一份 `config.js` / `app.js` / `style.css`，
+  改任何功能兩頁都會同步，不需要維護兩份程式
+- `app.js` 對不存在的介面元素會安靜跳過，所以少掉的頁首與篩選列不會讓程式出錯
+- 沒有篩選列，因此顯示的是**全部資料**；工作表取 `config.js` 的 `DEFAULT_SHEET`
+  （留空＝試算表第一個工作表）
+- 佈景沿用使用者在 `index.html` 選過的深／淺色設定（存在 `localStorage`）
+- 仍保留錯誤提示區塊：正常連線時完全看不到，只有在讀不到 Google Sheets、
+  退回離線範例資料時才會顯示警告 —— 少了它，使用者會把範例資料誤當成正式課表
+
+## 八、網頁功能
 
 | 分頁 | 內容 |
 |---|---|
