@@ -137,12 +137,13 @@
     return CFG.MONTH_GROUP_BY === 'category' ? catColor(key) : valueColor(key);
   }
 
-  /* 月份卡片裡名字旁的小標籤。卡片標題已經寫明科別，標籤不必再重複一次：
-   *   在「外」卡片   外(Y2不分)   → (Y2不分)      去掉重複的「外」
+  /* 月份卡片裡名字旁的小標籤。卡片標題已經寫明科別，標籤只用來補「多出來的資訊」：
+   *   在「急」卡片   急           → 不標          與卡片同名，標了也是廢話
+   *   在「外」卡片   外(Y2不分)   → (Y2不分)      去掉重複的「外」，只留註記
    *   在「急」卡片   急(完訓)     → (完訓)
    *   在「急」卡片   急-外        → 急-外         連字號後面是實際去的次專科，
    *   在「急」卡片   急-外(完訓)  → 急-外(完訓)   要看得出是 急-外 還是 急-內，整串保留
-   * 判斷方式：去掉組名後若緊接著括號，那就只是註記，可以省略組名；
+   * 判斷方式：與組名完全相同就不標；去掉組名後若緊接著括號，那只是註記，可以省略組名；
    * 若緊接著連字號（或其他字），代表是不同的訓練單位，保留原文。 */
   /* 外殼是否要在月份檢視提供科別篩選。
    * office.html 沒有上方的篩選列，科部助理需要在月份檢視裡自己挑科別；
@@ -197,13 +198,6 @@
     return Object.keys(state.monthUnits).filter(function (k) { return state.monthUnits[k]; });
   }
 
-  /* 只去掉括號註記、保留完整單位名稱，用來判斷一張卡片裡混了幾種單位 */
-  function unitOf(v) {
-    var s = String(v == null ? '' : v).trim();
-    var cut = s.search(/[（(]/);
-    return cut < 0 ? s : (s.slice(0, cut).trim() || s);
-  }
-
   function noteFor(value, key) {
     var v = String(value == null ? '' : value);
     if (v === key) return '';                         // 與組名完全相同，不用標
@@ -212,14 +206,6 @@
       if (/^[（(]/.test(rest)) return rest;           // 外(Y2不分) → (Y2不分)
     }
     return v;                                          // 急-外、急-外(完訓) 保留全名
-  }
-
-  /* 卡片裡若混了多種單位（社-安南／社內-安南／社外-安南，或 急／急-內／急-外），
-   * 連與卡片同名的那些也要標出來 —— 否則「沒有標籤」到底是一般社區還是漏標，
-   * 讀的人分不出來。只有一種單位時維持原樣，不做多餘的重複。 */
-  function tagInCard(value, key, multi) {
-    var note = noteFor(value, key);
-    return (multi && !note) ? key : note;
   }
 
   function colorOf(cell) {
@@ -552,10 +538,6 @@
     h += '<div class="mgrid">';
     keys.forEach(function (k) {
       var col = groupColor(k), fg = inkOn(col);
-      var variants = {};
-      buckets[k].forEach(function (it) { variants[unitOf(it.value)] = 1; });
-      var multi = Object.keys(variants).length > 1;
-
       h += '<div class="mcard"><h3 style="background:' + col + ';color:' + fg +
         ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '">' +
         '<span>' + esc(k) + '</span><span class="count-badge">' + buckets[k].length + ' 人</span></h3><ul>';
@@ -569,7 +551,7 @@
         if (d) return d;
         return String(a.row['受訓醫師']).localeCompare(String(b.row['受訓醫師']), 'zh-Hant');
       }).forEach(function (it) {
-        var tag = tagInCard(it.value, k, multi);
+        var tag = noteFor(it.value, k);
         var note = tag ? '<i class="vtag">' + esc(tag) + '</i>' : '';
         h += '<li><i class="pid">' + esc(it.row['人事號'] || '—') + '</i>' +
           '<b>' + esc(it.row['受訓醫師']) + '</b>' + note +
