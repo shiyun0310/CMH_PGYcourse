@@ -5,11 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PGY 訓練課程表</title>
 <meta name="description" content="PGY 輪訓課程表純資料版，供內部網頁嵌入使用。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
 <!--
   office.html — 純資料版
-  只保留總覽表／月份檢視／個人時程三個頁籤與其內容，
-  頁首、篩選列、頁尾一律不放，適合以 iframe 嵌入其他系統或內部網頁。
+  保留頁首與總覽表／月份檢視／個人時程三個頁籤，
+  不放篩選列與頁尾，適合以 iframe 嵌入其他系統或內部網頁。
+  整體採黃色系（index.html 為粉色系），兩頁一眼分得出來。
 
   · 與 index.html 共用 assets/ 底下同一份 config.js / app.js / style.css，
     改任何一邊的功能兩頁都會同步，不需要維護兩份程式。
@@ -19,9 +20,37 @@
     少了它，使用者會把範例資料誤當成正式課表。
   · ?v= 是版本參數，改過 assets/ 內容要一併更新，否則瀏覽器會用舊快取。
 -->
-<link rel="stylesheet" href="assets/style.css?v=2026-09-08.1">
+<link rel="stylesheet" href="assets/style.css?v=2026-09-08.2">
 </head>
 <body class="office">
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 48 44" role="img" aria-label="PGY">
+        <defs>
+          <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFF6D8"/>
+            <stop offset="1" stop-color="#FFD24A"/>
+          </linearGradient>
+        </defs>
+        <path d="M24.00 0.00 29.76 13.07 43.97 14.51 33.32 24.03 36.34 37.99 24.00 30.80 11.66 37.99 14.68 24.03 4.03 14.51 18.24 13.07Z"
+              fill="url(#sg)" stroke="rgba(90,60,0,.22)" stroke-width="1" stroke-linejoin="round"/>
+        <text x="24" y="22" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif"
+              font-size="10" font-weight="800" letter-spacing="-.4" fill="#5A3C00">PGY</text>
+      </svg>
+      <div>
+        <h1 id="title">PGY 訓練課程表</h1>
+        <p id="subtitle">畢業後一般醫學訓練</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="pill is-loading" id="status"><span class="dot"></span>讀取中…</span>
+      <button class="btn ghost" id="btn-refresh" title="重新向 Google Sheets 取得最新資料">↻ 重新整理</button>
+      <button class="btn ghost" id="btn-theme" title="切換深色 / 淺色">◐ 佈景</button>
+    </div>
+  </div>
+</header>
 
 <main class="wrap">
   <div id="banner"></div>
@@ -35,8 +64,8 @@
   <section class="panel view" id="view"></section>
 </main>
 
-<script src="assets/config.js?v=2026-09-08.1"></script>
-<script src="assets/sample-data.js?v=2026-09-08.1"></script>
-<script src="assets/app.js?v=2026-09-08.1"></script>
+<script src="assets/config.js?v=2026-09-08.2"></script>
+<script src="assets/sample-data.js?v=2026-09-08.2"></script>
+<script src="assets/app.js?v=2026-09-08.2"></script>
 </body>
 </html>
