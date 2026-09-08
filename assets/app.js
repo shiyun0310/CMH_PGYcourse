@@ -16,7 +16,8 @@
     view: 'grid',
     monthIndex: 0,
     filters: { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' },   // cat 為單選，'' = 全部
-    personQuery: ''      // 個人時程要先輸入姓名或人事號才顯示
+    personQuery: '',     // 個人時程要先輸入姓名或人事號才顯示
+    monthUnits: {}       // 月份檢視的科別複選（office.html 用）
   };
 
   /* ---------------------------------------------------------------- 工具 */
@@ -143,6 +144,47 @@
    *   在「急」卡片   急-外(完訓)  → 急-外(完訓)   要看得出是 急-外 還是 急-內，整串保留
    * 判斷方式：去掉組名後若緊接著括號，那就只是註記，可以省略組名；
    * 若緊接著連字號（或其他字），代表是不同的訓練單位，保留原文。 */
+  /* 外殼是否要在月份檢視提供科別篩選。
+   * office.html 沒有上方的篩選列，科部助理需要在月份檢視裡自己挑科別；
+   * index.html 已有整頁的篩選列，不重複提供。由 <body data-unit-filter> 指定。 */
+  function wantsUnitFilter() {
+    return document.body.hasAttribute('data-unit-filter');
+  }
+
+  /* 篩選按鈕的單位清單 = 資料裡出現過的所有訓練單位 ∪ config 的固定清單。
+   * 併入固定清單是為了讓當月沒人的科別也選得到，才能明確顯示「查無資料」。 */
+  function allUnits() {
+    var seen = {}, out = [];
+    (state.data ? state.data.rows : []).forEach(function (r) {
+      Object.keys(r.months).forEach(function (k) {
+        var u = groupKeyOf(r.months[k]);
+        if (u && !seen[u]) { seen[u] = 1; out.push(u); }
+      });
+    });
+    (CFG.MONTH_UNIT_CHOICES || []).forEach(function (u) {
+      if (u && !seen[u]) { seen[u] = 1; out.push(u); }
+    });
+
+    // 排序：先依科別（CATEGORY_COLORS 的順序），
+    // 同科別內沿用 MONTH_UNIT_CHOICES 給的順序，沒列到的排後面再依筆劃
+    var catOrder = Object.keys(CFG.CATEGORY_COLORS || {});
+    var choice = {};
+    (CFG.MONTH_UNIT_CHOICES || []).forEach(function (u, i) { choice[u] = i; });
+    var rank = function (v, map, miss) { var i = map.indexOf ? map.indexOf(v) : map[v]; return (i == null || i < 0) ? miss : i; };
+
+    return out.sort(function (a, b) {
+      var d = rank(categoryOf(a), catOrder, 99) - rank(categoryOf(b), catOrder, 99);
+      if (d) return d;
+      d = rank(a, choice, 9999) - rank(b, choice, 9999);
+      if (d) return d;
+      return a.localeCompare(b, 'zh-Hant');
+    });
+  }
+
+  function selectedUnits() {
+    return Object.keys(state.monthUnits).filter(function (k) { return state.monthUnits[k]; });
+  }
+
   function noteFor(value, key) {
     var v = String(value == null ? '' : value);
     if (v === key) return '';                         // 與組名完全相同，不用標
@@ -448,7 +490,10 @@
       (buckets[k] = buckets[k] || []).push({ row: r, value: c.value });
     });
 
-    var keys = Object.keys(buckets).sort(function (a, b) {
+    var picked = selectedUnits();
+    var keys = Object.keys(buckets).filter(function (k) {
+      return !picked.length || state.monthUnits[k];
+    }).sort(function (a, b) {
       return buckets[b].length - buckets[a].length || a.localeCompare(b, 'zh-Hant');
     });
 
@@ -465,7 +510,17 @@
     var h = '<div class="view-head"><div><h2>' + esc(m.label) + ' 輪訓分布</h2></div>' +
       nav + '</div>';
 
-    if (!keys.length) return h + emptyState('本月沒有符合條件的排課');
+    if (wantsUnitFilter()) h += unitFilterBar(picked);
+
+    if (!keys.length) {
+      if (picked.length) {
+        return h + '<div class="empty-state"><div class="big">🔎</div>' +
+          '<div><b>查無資料</b></div>' +
+          '<div style="margin-top:6px;font-size:12.5px">' +
+          esc(m.label) + ' 沒有受訓醫師被排到：' + esc(picked.join('、')) + '</div></div>';
+      }
+      return h + emptyState('本月沒有符合條件的排課');
+    }
 
     h += '<div class="mgrid">';
     keys.forEach(function (k) {
@@ -493,6 +548,28 @@
     });
     h += '</div>';
     return h;
+  }
+
+  /* 月份檢視的科別複選按鈕列 */
+  function unitFilterBar(picked) {
+    var units = allUnits();
+    if (!units.length) return '';
+
+    var chips = units.map(function (u) {
+      var col = valueColor(u);
+      return '<button class="chip' + (state.monthUnits[u] ? ' on' : '') + '" data-unit="' + esc(u) + '">' +
+        '<i class="sw" style="background:' + col + ';border-color:' + ringOn(col) + '"></i>' + esc(u) + '</button>';
+    }).join('');
+
+    var sel = picked.length
+      ? '<div class="ufilter-sel"><span class="lbl">已選擇</span>' +
+        picked.map(function (u) { return '<b>' + esc(u) + '</b>'; }).join('') +
+        '<button class="btn" id="u-clear">清除篩選</button></div>'
+      : '<div class="ufilter-sel none">未選擇任何科別，顯示本月全部單位。可複選。</div>';
+
+    return '<div class="ufilter">' +
+      '<div class="ufilter-title">科別篩選</div>' +
+      '<div class="chips">' + chips + '</div>' + sel + '</div>';
   }
 
   /* ------------------------------------------------------- 檢視：個人 */
@@ -706,6 +783,7 @@
     on('#btn-reset', 'click', function () {
       state.filters = { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' };
       state.personQuery = '';
+      state.monthUnits = {};
       withEl('#f-q', function (el) { el.value = ''; });
       render();
     });
@@ -734,6 +812,13 @@
       if (e.target.id === 'p-clear') { state.personQuery = ''; render(); return; }
       if (e.target.id === 'btn-csv') { exportCsv(); return; }
       if (e.target.id === 'btn-print') { window.print(); return; }
+      var u = e.target.closest('[data-unit]');
+      if (u) {
+        var key = u.dataset.unit;
+        state.monthUnits[key] = !state.monthUnits[key];
+        render(); return;
+      }
+      if (e.target.id === 'u-clear') { state.monthUnits = {}; render(); return; }
       if (e.target.id === 'm-prev') { state.monthIndex = Math.max(0, state.monthIndex - 1); render(); return; }
       if (e.target.id === 'm-next') { state.monthIndex = state.monthIndex + 1; render(); return; }
     });
