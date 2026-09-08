@@ -219,6 +219,30 @@ table.grid td.q1{border-left:2px solid var(--line)}
 }
 .count-badge{background:rgba(0,0,0,.16);border-radius:999px;padding:1px 9px;font-size:11.5px;font-weight:800}
 
+/* ---------- 月份檢視：科別複選篩選 ---------- */
+.ufilter{padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.ufilter-title{font-size:11.5px;font-weight:700;color:var(--ink-3);letter-spacing:.4px;margin-bottom:8px}
+.ufilter .chips{max-height:132px;overflow:auto;gap:6px}
+.ufilter-sel{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+  margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:12.5px;
+}
+.ufilter-sel .lbl{
+  font-weight:800;color:#fff;background:var(--brand);
+  border-radius:6px;padding:2px 9px;font-size:12px;letter-spacing:.4px;
+}
+.ufilter-sel b{
+  font-weight:700;color:var(--brand);background:var(--brand-soft);
+  border:1px solid var(--line);border-radius:999px;padding:2px 10px;
+}
+.ufilter-sel .btn{margin-left:auto;padding:5px 11px;font-size:12.5px}
+.ufilter-sel.none{color:var(--ink-3);font-weight:500}
+@media (max-width:520px){
+  .ufilter{padding:10px 12px}
+  .ufilter .chips{max-height:150px}
+  .ufilter-sel .btn{margin-left:0;width:100%;justify-content:center}
+}
+
 /* ---------- Person view ---------- */
 .pfind{display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:100%}
 .pfind input{
