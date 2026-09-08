@@ -121,8 +121,13 @@
     var base = cut < 0 ? s : (s.slice(0, cut).trim() || s);
 
     // 2) 除非該科別的後綴代表實際單位，否則連字號後面也視為註記
-    if ((CFG.KEEP_SUFFIX_CATEGORIES || []).indexOf(categoryOf(s)) >= 0) return base;
+    var cat = categoryOf(s);
     var dash = base.search(/[-–—－]/);
+    if ((CFG.KEEP_SUFFIX_CATEGORIES || []).indexOf(cat) >= 0) {
+      // 社內-郭綜、社外-郭綜 → 社-郭綜：連字號前面只是次分組，同一家醫院併成一張卡
+      var merge = (CFG.UNIT_MERGE_PREFIX || {})[cat];
+      return (merge && dash > 0) ? merge + base.slice(dash) : base;
+    }
     return dash > 0 ? base.slice(0, dash).trim() : base;
   }
 
@@ -185,6 +190,13 @@
     return Object.keys(state.monthUnits).filter(function (k) { return state.monthUnits[k]; });
   }
 
+  /* 只去掉括號註記、保留完整單位名稱，用來判斷一張卡片裡混了幾種單位 */
+  function unitOf(v) {
+    var s = String(v == null ? '' : v).trim();
+    var cut = s.search(/[（(]/);
+    return cut < 0 ? s : (s.slice(0, cut).trim() || s);
+  }
+
   function noteFor(value, key) {
     var v = String(value == null ? '' : value);
     if (v === key) return '';                         // 與組名完全相同，不用標
@@ -193,6 +205,14 @@
       if (/^[（(]/.test(rest)) return rest;           // 外(Y2不分) → (Y2不分)
     }
     return v;                                          // 急-外、急-外(完訓) 保留全名
+  }
+
+  /* 卡片裡若混了多種單位（社-安南／社內-安南／社外-安南，或 急／急-內／急-外），
+   * 連與卡片同名的那些也要標出來 —— 否則「沒有標籤」到底是一般社區還是漏標，
+   * 讀的人分不出來。只有一種單位時維持原樣，不做多餘的重複。 */
+  function tagInCard(value, key, multi) {
+    var note = noteFor(value, key);
+    return (multi && !note) ? key : note;
   }
 
   function colorOf(cell) {
@@ -525,6 +545,10 @@
     h += '<div class="mgrid">';
     keys.forEach(function (k) {
       var col = groupColor(k), fg = inkOn(col);
+      var variants = {};
+      buckets[k].forEach(function (it) { variants[unitOf(it.value)] = 1; });
+      var multi = Object.keys(variants).length > 1;
+
       h += '<div class="mcard"><h3 style="background:' + col + ';color:' + fg +
         ';box-shadow:inset 0 0 0 1px ' + ringOn(col) + '">' +
         '<span>' + esc(k) + '</span><span class="count-badge">' + buckets[k].length + ' 人</span></h3><ul>';
@@ -538,7 +562,7 @@
         if (d) return d;
         return String(a.row['受訓醫師']).localeCompare(String(b.row['受訓醫師']), 'zh-Hant');
       }).forEach(function (it) {
-        var tag = noteFor(it.value, k);
+        var tag = tagInCard(it.value, k, multi);
         var note = tag ? '<i class="vtag">' + esc(tag) + '</i>' : '';
         h += '<li><i class="pid">' + esc(it.row['人事號'] || '—') + '</i>' +
           '<b>' + esc(it.row['受訓醫師']) + '</b>' + note +
