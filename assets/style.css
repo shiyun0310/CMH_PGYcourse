@@ -66,7 +66,7 @@ a{color:var(--brand-2)}
   width:48px;height:44px;flex:none;display:block;
   filter:drop-shadow(0 2px 4px rgba(60,10,30,.28));
 }
-.brand h1{margin:0;font-size:21px;font-weight:700;letter-spacing:.5px;line-height:1.25}
+.brand h1{margin:0;font-size:27px;font-weight:800;letter-spacing:.5px;line-height:1.25}
 .brand p{margin:2px 0 0;font-size:12.5px;color:rgba(255,255,255,.82)}
 .top-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 
@@ -314,7 +314,7 @@ table.grid td.q1{border-left:2px solid var(--line)}
 @media (max-width:720px){
   .wrap{padding:14px 12px 44px}
   .top{padding:16px 0 14px}
-  .brand h1{font-size:18px}
+  .brand h1{font-size:22px}
   .brand .mark{width:40px;height:37px}
   /* 保留內部捲動高度，表頭才能黏住；設 none 會讓年／月表頭跟著捲走 */
   .tscroll{max-height:68vh}
@@ -327,7 +327,7 @@ table.grid td.q1{border-left:2px solid var(--line)}
 @media (max-width:520px){
   .wrap{padding:12px 10px 40px}
   .top .wrap{gap:10px}
-  .brand h1{font-size:17px}
+  .brand h1{font-size:19px}
   .brand p{font-size:11.5px}
   .top-actions{width:100%}
   .top-actions .pill{order:-1}
@@ -411,19 +411,20 @@ body.office .pill.is-loading .dot{background:#4A1D00}
    頁首是深色文字配亮橘底，白色浮水印會讓底色更亮，深色字對比反而更好。 */
 body.office .top{position:relative;overflow:hidden}
 body.office .top > .wrap{position:relative;z-index:1}
+body.office .top{padding:26px 0 24px}   /* 少了副標後頁首偏薄，補一點高度讓大標題透氣 */
 body.office .mark-wm{
   position:absolute;left:6px;top:50%;transform:translateY(-50%);
-  height:148px;width:auto;opacity:.30;pointer-events:none;z-index:0;
+  height:126px;width:auto;opacity:.30;pointer-events:none;z-index:0;
 }
 /* 標題原本靠標誌撐開左側留白，標誌移走後改用內距，位置維持不變 */
 body.office .brand{padding-left:66px}
 
 @media (max-width:720px){
-  body.office .mark-wm{height:128px;left:-10px}
+  body.office .mark-wm{height:108px;left:-8px}
   body.office .brand{padding-left:52px}
 }
 @media (max-width:520px){
-  body.office .mark-wm{height:112px;left:-14px;opacity:.22}
+  body.office .mark-wm{height:96px;left:-12px;opacity:.24}
   body.office .brand{padding-left:44px}
 }
 

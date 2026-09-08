@@ -885,9 +885,13 @@
     var ver = me && (me.getAttribute('src').split('v=')[1] || '');
     if (ver) withEl('#build', function (el) { el.textContent = '　·　版本 ' + ver; });
 
-    withEl('#title', function (el) { el.textContent = CFG.TITLE || 'PGY 訓練課程表'; });
-    withEl('#subtitle', function (el) { el.textContent = CFG.SUBTITLE || ''; });
-    document.title = CFG.TITLE || 'PGY 訓練課程表';
+    // 標題以各頁 HTML 為準；只有 config 有填值時才覆寫，
+    // 兩頁標題不同，不能被共用的設定檔蓋掉
+    var title = String(CFG.TITLE || '').trim();
+    var subtitle = String(CFG.SUBTITLE || '').trim();
+    if (title) withEl('#title', function (el) { el.textContent = title; });
+    if (subtitle) withEl('#subtitle', function (el) { el.textContent = subtitle; });
+    document.title = title || (withEl('#title', function () {}) || {}).textContent || 'PGY 訓練課程表';
 
     bind();
     load();
