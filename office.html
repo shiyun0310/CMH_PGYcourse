@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
 <!--
   office.html — 純資料版
-  保留頁首與總覽表／月份檢視／個人時程三個頁籤，
+  保留頁首與總覽表／月份檢視兩個頁籤，
   不放篩選列與頁尾，適合以 iframe 嵌入其他系統或內部網頁。
   整體採橘色系（index.html 為粉色系），兩頁一眼分得出來。
 
@@ -20,7 +20,7 @@
     少了它，使用者會把範例資料誤當成正式課表。
   · ?v= 是版本參數，改過 assets/ 內容要一併更新，否則瀏覽器會用舊快取。
 -->
-<link rel="stylesheet" href="assets/style.css?v=2026-09-08.5">
+<link rel="stylesheet" href="assets/style.css?v=2026-09-08.6">
 </head>
 <body class="office">
 
@@ -58,14 +58,13 @@
   <nav class="tabs" id="tabs">
     <button class="tab on" data-view="grid">總覽表</button>
     <button class="tab" data-view="month">月份檢視</button>
-    <button class="tab" data-view="person">個人時程</button>
   </nav>
 
   <section class="panel view" id="view"></section>
 </main>
 
-<script src="assets/config.js?v=2026-09-08.5"></script>
-<script src="assets/sample-data.js?v=2026-09-08.5"></script>
-<script src="assets/app.js?v=2026-09-08.5"></script>
+<script src="assets/config.js?v=2026-09-08.6"></script>
+<script src="assets/sample-data.js?v=2026-09-08.6"></script>
+<script src="assets/app.js?v=2026-09-08.6"></script>
 </body>
 </html>
