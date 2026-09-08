@@ -406,10 +406,26 @@ body.office .pill.is-loading .dot{background:#4A1D00}
 [data-theme="dark"] body.office .btn.ghost:hover{background:rgba(255,255,255,.24);color:#fff3e4}
 [data-theme="dark"] body.office .pill .dot{background:#8fd3b0}
 
-/* 星星放大：viewBox 收緊到星形的外框（原本下方有一段空白），
-   再把 .mark 尺寸調大，實際看到的星星才會明顯變大 */
-body.office .brand .mark{width:58px;height:55px}
-@media (max-width:720px){ body.office .brand .mark{width:50px;height:47px} }
+/* 星星改為大尺寸浮水印：絕對定位在頁首左側、上下溢出後由 overflow:hidden 裁掉，
+   不再被 44px 的標誌框限制住。放在內容底下，標題文字壓在它上面。
+   頁首是深色文字配亮橘底，白色浮水印會讓底色更亮，深色字對比反而更好。 */
+body.office .top{position:relative;overflow:hidden}
+body.office .top > .wrap{position:relative;z-index:1}
+body.office .mark-wm{
+  position:absolute;left:6px;top:50%;transform:translateY(-50%);
+  height:148px;width:auto;opacity:.30;pointer-events:none;z-index:0;
+}
+/* 標題原本靠標誌撐開左側留白，標誌移走後改用內距，位置維持不變 */
+body.office .brand{padding-left:66px}
+
+@media (max-width:720px){
+  body.office .mark-wm{height:128px;left:-10px}
+  body.office .brand{padding-left:52px}
+}
+@media (max-width:520px){
+  body.office .mark-wm{height:112px;left:-14px;opacity:.22}
+  body.office .brand{padding-left:44px}
+}
 
 /* ---------- office.html：版面 ---------- */
 
