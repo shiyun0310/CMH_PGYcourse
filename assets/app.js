@@ -36,6 +36,12 @@
     return el;
   }
 
+  /* 外殼決定有哪些檢視：office.html 沒有個人時程頁籤，
+   * 總覽表的姓名就不能做成可點的連結，否則會跳到沒有對應分頁的畫面。 */
+  function hasView(v) {
+    return !!$('.tab[data-view="' + v + '"]');
+  }
+
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -389,7 +395,7 @@
       fixed.forEach(function (c, i) {
         var cls = 'fx' + (i === fixed.length - 1 ? ' fx-last' : '') +
           (c === '受訓醫師' ? ' fx-id name' : ' dim');
-        var inner = (c === '受訓醫師')
+        var inner = (c === '受訓醫師' && hasView('person'))
           ? '<button class="rowbtn" data-person="' + esc(r[c]) + '">' + esc(r[c] || '—') + '</button>'
           : esc(r[c] || '—');
         h += '<td class="' + cls + '" data-fx="' + i + '">' + inner + '</td>';
@@ -555,6 +561,7 @@
     if (!state.data) { $('#view').innerHTML = emptyState('資料載入中…'); return; }
 
     renderFilters();
+    if (!hasView(state.view)) state.view = 'grid';   // 外殼沒有這個頁籤就退回總覽表
     $$('.tab').forEach(function (t) { t.classList.toggle('on', t.dataset.view === state.view); });
 
     var body;
@@ -703,7 +710,10 @@
 
     on('#view', 'click', function (e) {
       var p = e.target.closest('[data-person]');
-      if (p) { state.personQuery = p.dataset.person; state.view = 'person'; render(); return; }
+      if (p) {
+        if (!hasView('person')) return;
+        state.personQuery = p.dataset.person; state.view = 'person'; render(); return;
+      }
       if (e.target.id === 'p-clear') { state.personQuery = ''; render(); return; }
       if (e.target.id === 'btn-csv') { exportCsv(); return; }
       if (e.target.id === 'btn-print') { window.print(); return; }

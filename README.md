@@ -10,7 +10,7 @@
 
 ```
 index.html                 主頁面（完整版）
-office.html                辦公室版：頁首＋三個頁籤，橘色系，適合 iframe 嵌入
+office.html                辦公室版：頁首＋總覽表／月份檢視，橘色系，適合 iframe 嵌入
 check.html                 GAS 連線檢測頁（串接後先開這頁確認）
 assets/config.js           ★ 唯一需要修改的設定檔（GAS 網址、色票）
 assets/style.css           樣式（含深色模式、列印樣式）
@@ -219,7 +219,7 @@ AUTO_REFRESH_MS: 0,         // 想自動同步就設 300000（5 分鐘）
 
 ## 七、辦公室版 office.html
 
-`office.html` 保留頁首與**總覽表／月份檢視／個人時程**三個頁籤，
+`office.html` 保留頁首與**總覽表／月份檢視**兩個頁籤（沒有個人時程），
 不放篩選列與頁尾，適合用 `<iframe>` 嵌到其他系統或內部網頁：
 
 ```html
@@ -229,6 +229,9 @@ AUTO_REFRESH_MS: 0,         // 想自動同步就設 300000（5 分鐘）
 - 與 `index.html` **共用** `assets/` 底下同一份 `config.js` / `app.js` / `style.css`，
   改任何功能兩頁都會同步，不需要維護兩份程式
 - `app.js` 對不存在的介面元素會安靜跳過，所以少掉的頁首與篩選列不會讓程式出錯
+- 有哪些檢視由外殼的頁籤決定：`app.js` 會以 `hasView()` 檢查頁籤是否存在。
+  `office.html` 沒有個人時程頁籤，總覽表的姓名就自動改為純文字而非可點連結，
+  不會跳到沒有對應分頁的畫面
 - 沒有篩選列，因此顯示的是**全部資料**；工作表取 `config.js` 的 `DEFAULT_SHEET`
   （留空＝試算表第一個工作表）
 - 佈景沿用使用者在 `index.html` 選過的深／淺色設定（存在 `localStorage`）
