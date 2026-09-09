@@ -321,7 +321,7 @@ function getNotices_(sheetName, noCache) {
   var sh = name ? book_().getSheetByName(name) : null;
   if (!sh) return { ok: true, sheet: name, missing: true, notices: [], updatedAt: nowStr_() };
 
-  var out = { ok: true, sheet: name, missing: false, notices: [], updatedAt: nowStr_() };
+  var out = { ok: true, sheet: name, missing: false, notices: [], cols: [], missingCols: [], updatedAt: nowStr_() };
   var lastRow = sh.getLastRow(), lastCol = sh.getLastColumn();
   if (lastRow < HEADER_ROW + 1 || lastCol < 1) return out;
 
@@ -335,6 +335,12 @@ function getNotices_(sheetName, noCache) {
       var at = header.indexOf(String(alias).toLowerCase());
       if (at >= 0) idx[field] = at;
     });
+  });
+
+  /* 認得的欄與沒找到的欄都回報出去 —— check.html 會列出來。
+     公告顯示不出日期，最常見的原因就是根本沒有「日期」這一欄。 */
+  Object.keys(NOTICE_ALIASES).forEach(function (field) {
+    (field in idx ? out.cols : out.missingCols).push(NOTICE_ALIASES[field][0]);
   });
 
   var n = lastRow - HEADER_ROW;
