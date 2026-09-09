@@ -337,6 +337,12 @@ table.grid td.q1{border-left:2px solid var(--line)}
 .board-list li:first-child{border-top:none}
 .board-item.is-new{border-left-color:var(--brand-2);background:linear-gradient(90deg,var(--brand-soft),transparent 46%)}
 .board-line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+/* 公告日期：等寬數字讓多則的日期上下對齊；右邊一條細線與標題分隔 */
+.board-date{
+  flex:none;font-size:12.5px;font-weight:700;color:var(--ink-3);
+  font-variant-numeric:tabular-nums;letter-spacing:.2px;
+  padding-right:9px;border-right:1px solid var(--line);
+}
 .board-title{font-size:14.5px;font-weight:800;color:var(--ink);line-height:1.5}
 .board-pin,.board-tag,.board-new{
   flex:none;font-size:11px;font-weight:700;letter-spacing:.3px;

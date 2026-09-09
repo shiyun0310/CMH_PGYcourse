@@ -915,16 +915,18 @@
       '</div>' +
       '<ul class="board-list">' + shown.map(function (n) {
         var id = noticeId(n);
-        var meta = [n.date, n.author].filter(Boolean).map(esc).join('　·　');
+        // 公告日期放在整則的最前面 —— 排程改動是「哪一天發的」最重要，
+        // 放在內容下方的小字會被略過。張貼者留在下方那一行。
         return '<li class="board-item' + (n.pin ? ' is-pin' : '') + (seen[id] ? '' : ' is-new') + '">' +
           '<div class="board-line">' +
+            (n.date ? '<time class="board-date" title="公告日期">' + esc(n.date) + '</time>' : '') +
             (n.pin ? '<span class="board-pin">置頂</span>' : '') +
             (n.tag ? '<span class="board-tag">' + esc(n.tag) + '</span>' : '') +
             (n.title ? '<b class="board-title">' + esc(n.title) + '</b>' : '') +
             (seen[id] ? '' : '<span class="board-new">NEW</span>') +
           '</div>' +
           (n.body ? '<div class="board-text">' + noticeText(n.body) + '</div>' : '') +
-          (meta ? '<div class="board-meta">' + meta + '</div>' : '') +
+          (n.author ? '<div class="board-meta">' + esc(n.author) + '　公告</div>' : '') +
         '</li>';
       }).join('') + '</ul>';
     box.hidden = false;
