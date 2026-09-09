@@ -16,6 +16,9 @@
   --warn:#b06a00;
   --err:#b3261e;
   --shadow:0 1px 2px rgba(80,30,50,.06),0 8px 24px rgba(80,30,50,.08);
+  /* 壓在 --brand 底色上的文字色。淺色模式 brand 夠深 → 白字；
+     深色模式 brand 是亮粉／亮橘，白字只有 1.4:1，必須換成深色字。 */
+  --on-brand:#ffffff;
   --radius:14px;
   --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
   --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
@@ -37,6 +40,7 @@
   --warn:#e2b062;
   --err:#f0857c;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.35);
+  --on-brand:#241a1f;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -303,10 +307,56 @@ table.grid td.q1{border-left:2px solid var(--line)}
 [data-theme="dark"] .banner.err{background:#2e1a18;border-color:#5e2f2b;color:#f0a49c}
 .foot{margin-top:26px;text-align:center;font-size:12px;color:var(--ink-3)}
 
+/* ---------- 公告欄（留言板） ----------
+   內容來自 Google Sheets 的「公告」工作表；沒有任何一則時，
+   app.js 會把 #board 設成 hidden，整塊不佔位置。
+   顏色全部用色票變數，office.html 的橘色系會自動跟著換。 */
+.board{margin-top:16px;padding:14px 16px 4px}
+.board-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;margin-bottom:2px;
+}
+.board-head h2{
+  margin:0;font-size:15px;font-weight:800;color:var(--brand);
+  display:flex;align-items:center;gap:9px;letter-spacing:.3px;
+}
+/* 未讀數：橫幅式提醒，不用純色小紅點 —— 色盲使用者也讀得到「幾則未讀」 */
+.board-n{
+  font-size:11.5px;font-weight:700;letter-spacing:.2px;
+  padding:2px 9px;border-radius:999px;
+  background:var(--brand-soft);color:var(--brand);border:1px solid var(--line);
+}
+.board-tools{display:flex;gap:8px;flex-wrap:wrap}
+.btn.sm{padding:4px 10px;font-size:12px;border-radius:8px}
+
+.board-list{list-style:none;margin:0;padding:0}
+.board-item{
+  padding:11px 0 11px 12px;border-top:1px dashed var(--line);
+  border-left:3px solid transparent;border-top-left-radius:2px;
+}
+.board-list li:first-child{border-top:none}
+.board-item.is-new{border-left-color:var(--brand-2);background:linear-gradient(90deg,var(--brand-soft),transparent 46%)}
+.board-line{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.board-title{font-size:14.5px;font-weight:800;color:var(--ink);line-height:1.5}
+.board-pin,.board-tag,.board-new{
+  flex:none;font-size:11px;font-weight:700;letter-spacing:.3px;
+  padding:1px 8px;border-radius:999px;border:1px solid var(--line);
+}
+.board-pin{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.board-tag{background:var(--panel-2);color:var(--ink-2)}
+.board-new{background:transparent;border-color:var(--brand-2);color:var(--brand-2)}
+.board-text{margin-top:4px;font-size:13.5px;color:var(--ink-2);line-height:1.75;word-break:break-word}
+.board-meta{margin-top:5px;font-size:12px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+
+@media (max-width:520px){
+  .board{padding:12px 13px 2px}
+  .board-title{font-size:14px}
+}
+
 /* ---------- Print ---------- */
 @media print{
   body{background:#fff}
-  .top,.filters,.tabs,.top-actions,.view-head .btn,.note,.foot,.banner{display:none!important}
+  .top,.filters,.tabs,.top-actions,.view-head .btn,.note,.foot,.banner,.board{display:none!important}
   .wrap{max-width:none;padding:0}
   .panel{box-shadow:none;border:none}
   .tscroll{max-height:none;overflow:visible}

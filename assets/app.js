@@ -252,10 +252,10 @@
     return base + (base.indexOf('?') < 0 ? '?' : '&') + qs;
   }
 
-  function fetchFromGas(sheetName) {
+  /* 課表與公告欄都走這裡；只有 action 與參數不同 */
+  function callGas(params) {
     var base = (CFG.GAS_WEB_APP_URL || '').trim();
     if (!base) return Promise.reject(new Error('尚未設定 GAS_WEB_APP_URL'));
-    var params = { action: 'schedule', sheet: sheetName || CFG.DEFAULT_SHEET || '', t: Date.now() };
     var url = buildUrl(base, params);
     var mode = CFG.TRANSPORT || 'auto';
 
@@ -269,6 +269,10 @@
 
     if (mode === 'fetch') return direct;
     return direct.catch(function () { return jsonp(url); });   // auto：CORS 失敗改走 JSONP
+  }
+
+  function fetchFromGas(sheetName) {
+    return callGas({ action: 'schedule', sheet: sheetName || CFG.DEFAULT_SHEET || '', t: Date.now() });
   }
 
   /* --------------------------------------------------------- 正規化資料 */
@@ -774,10 +778,182 @@
       .then(render);
   }
 
+  /* ========================= 公告欄（留言板） =========================
+   *  內容來自 Google Sheets 的另一個工作表（config.js 的 NOTICE_SHEET，
+   *  預設叫「公告」），教學部在試算表上填一列，兩頁就同步看得到。
+   *
+   *  這一塊刻意與課表完全獨立：沒建那個工作表、一則都沒有、
+   *  或連線失敗時，#board 整塊隱藏，頁面跟沒有這個功能時一模一樣，
+   *  也不會讓課表跟著顯示錯誤。
+   * ================================================================= */
+
+  var board = { notices: [], expanded: false };
+
+  /* 還沒設定 GAS 網址（離線範例模式）時拿來示範版面用的兩則。
+   * 一旦填了 GAS_WEB_APP_URL，內容一律以試算表的「公告」工作表為準，
+   * 這裡的字不會出現在正式頁面上。 */
+  var DEMO_NOTICES = [
+    {
+      date: '2026/09/01', tag: '排程異動', pin: true, author: '教學部',
+      title: '（範例）9 月急診梯次調整',
+      body: '原排在 9 月急診的第 3 組，改到 10 月；9 月改為內科。\n細節請看試算表，如有疑問請與教學部聯絡。'
+    },
+    {
+      date: '2026/08/20', tag: '提醒', author: '教學部',
+      title: '（範例）選修志願調查將於月底截止',
+      body: '這一塊是「公告欄」的示範內容 —— 正式使用時請在 Google Sheets 新增一個叫「公告」的工作表，一則公告填一列。'
+    }
+  ];
+
+  /* 這個外殼是哪一頁：試算表「對象」欄要靠它決定某一則要不要出現。
+   * office.html 的 <body> 有 class="office"，index.html 沒有。 */
+  function pageRole() {
+    return document.body.classList.contains('office') ? 'office' : 'admin';
+  }
+
+  /* 對象欄：留空或「全部」= 兩頁都顯示；
+   * 只寫到管理者類的字 = 只有 index.html；只寫到公開類的字 = 只有 office.html。
+   * 兩類都寫到（或看不懂）就當作全部，寧可多顯示也不要讓公告憑空消失。 */
+  function noticeForThisPage(n) {
+    var a = String(n.audience || '').trim();
+    if (!a || /^(全部|兩頁|all|both)$/i.test(a)) return true;
+    var admin = /管理|權限|內部|index|admin/i.test(a);
+    var office = /公開|科部|助理|外部|office/i.test(a);
+    if (admin && !office) return pageRole() === 'admin';
+    if (office && !admin) return pageRole() === 'office';
+    return true;
+  }
+
+  function normalizeNotices(list) {
+    var out = (list || []).map(function (n, i) {
+      return {
+        date: String(n.date == null ? '' : n.date).trim(),
+        ts: Number(n.ts) || 0,
+        tag: String(n.tag == null ? '' : n.tag).trim(),
+        title: String(n.title == null ? '' : n.title).trim(),
+        body: String(n.body == null ? '' : n.body).trim(),
+        author: String(n.author == null ? '' : n.author).trim(),
+        pin: !!n.pin,
+        audience: String(n.audience == null ? '' : n.audience).trim(),
+        seq: i
+      };
+    }).filter(function (n) { return (n.title || n.body) && noticeForThisPage(n); });
+
+    // 後端讀不出時間戳時（例如日期是手打的文字），前端再試著解析一次，
+    // 不然所有公告都會當成「沒填日期」而照試算表的列順序排。
+    out.forEach(function (n) {
+      if (n.ts || !n.date) return;
+      var m = n.date.match(/(\d{4})\s*[\/\-.年]\s*(\d{1,2})(?:\s*[\/\-.月]\s*(\d{1,2}))?/);
+      if (m) n.ts = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3] || 1)).getTime();
+    });
+
+    // 置頂優先，其次日期新的在前；沒填日期的排最後（ts = 0），順序照試算表
+    out.sort(function (a, b) {
+      if (a.pin !== b.pin) return a.pin ? -1 : 1;
+      if (a.ts !== b.ts) return b.ts - a.ts;
+      return a.seq - b.seq;
+    });
+    return out;
+  }
+
+  /* 已讀：只記在這台電腦的瀏覽器裡，不寫回試算表。
+   * 用「日期＋標題＋內容開頭」當識別碼，改過內容就會重新變成未讀。 */
+  var SEEN_KEY = 'pgy-board-seen';
+
+  function noticeId(n) {
+    return (n.date || '') + '|' + (n.title || '') + '|' + (n.body || '').slice(0, 40);
+  }
+  function seenIds() {
+    try {
+      var a = JSON.parse(localStorage.getItem(SEEN_KEY) || '[]');
+      return Object.prototype.toString.call(a) === '[object Array]' ? a : [];
+    } catch (e) { return []; }
+  }
+  function markAllSeen() {
+    var ids = seenIds().concat(board.notices.map(noticeId));
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify(uniq(ids).slice(-300))); } catch (e) {}
+  }
+
+  /* 內容維持使用者在試算表裡打的斷行；網址自動變成可點的連結。
+   * 先 esc 再處理，貼進來的內容不會變成 HTML。 */
+  function noticeText(s) {
+    return esc(s)
+      .replace(/(https?:\/\/[^\s<]+)/g, function (u) {
+        return '<a href="' + u + '" target="_blank" rel="noopener noreferrer">' + u + '</a>';
+      })
+      .replace(/\r?\n/g, '<br>');
+  }
+
+  function renderBoard() {
+    var box = $('#board');
+    if (!box) return;
+
+    var list = board.notices;
+    if (!list.length) { box.hidden = true; box.innerHTML = ''; return; }
+
+    var seen = {};
+    seenIds().forEach(function (id) { seen[id] = 1; });
+    var unread = list.filter(function (n) { return !seen[noticeId(n)]; }).length;
+
+    // 收合時至少顯示所有置頂的那幾則，置頂了卻被折起來就沒有意義
+    var pinned = list.filter(function (n) { return n.pin; }).length;
+    var preview = Math.max(Number(CFG.NOTICE_PREVIEW) || 0, pinned, 1);
+    var shown = board.expanded ? list : list.slice(0, preview);
+    var rest = list.length - shown.length;
+
+    var tools = '';
+    if (unread) tools += '<button class="btn ghost sm" id="board-seen">標記已讀</button>';
+    if (rest > 0) tools += '<button class="btn ghost sm" id="board-more">顯示全部 ' + list.length + ' 則</button>';
+    else if (board.expanded && list.length > preview) tools += '<button class="btn ghost sm" id="board-less">收合</button>';
+
+    box.innerHTML =
+      '<div class="board-head">' +
+        '<h2>📌 公告欄' +
+          (unread ? '<span class="board-n">' + unread + ' 則未讀</span>' : '') +
+        '</h2>' +
+        '<div class="board-tools">' + tools + '</div>' +
+      '</div>' +
+      '<ul class="board-list">' + shown.map(function (n) {
+        var id = noticeId(n);
+        var meta = [n.date, n.author].filter(Boolean).map(esc).join('　·　');
+        return '<li class="board-item' + (n.pin ? ' is-pin' : '') + (seen[id] ? '' : ' is-new') + '">' +
+          '<div class="board-line">' +
+            (n.pin ? '<span class="board-pin">置頂</span>' : '') +
+            (n.tag ? '<span class="board-tag">' + esc(n.tag) + '</span>' : '') +
+            (n.title ? '<b class="board-title">' + esc(n.title) + '</b>' : '') +
+            (seen[id] ? '' : '<span class="board-new">NEW</span>') +
+          '</div>' +
+          (n.body ? '<div class="board-text">' + noticeText(n.body) + '</div>' : '') +
+          (meta ? '<div class="board-meta">' + meta + '</div>' : '') +
+        '</li>';
+      }).join('') + '</ul>';
+    box.hidden = false;
+  }
+
+  function loadNotices() {
+    var box = $('#board');
+    if (!box) return Promise.resolve();
+
+    var sheet = String(CFG.NOTICE_SHEET == null ? '公告' : CFG.NOTICE_SHEET).trim();
+    if (!sheet) { box.hidden = true; return Promise.resolve(); }   // 設成空字串 = 關掉公告欄
+
+    if (!(CFG.GAS_WEB_APP_URL || '').trim()) {                     // 離線範例模式
+      board.notices = normalizeNotices(window.PGY_SAMPLE_NOTICES || DEMO_NOTICES);
+      renderBoard();
+      return Promise.resolve();
+    }
+
+    return callGas({ action: 'notices', sheet: sheet, t: Date.now() })
+      .then(function (raw) { board.notices = normalizeNotices(raw && raw.notices); })
+      .catch(function () { board.notices = []; })   // 公告讀不到就不顯示，不干擾課表
+      .then(renderBoard);
+  }
+
   /* ------------------------------------------------------------ 事件 */
   function bind() {
     on('#btn-refresh', 'click', function () {
       load(state.data ? state.data.sheet : '');
+      loadNotices();
     });
 
     on('#btn-theme', 'click', function () {
@@ -852,6 +1028,13 @@
       try { el.setSelectionRange(pos, pos); } catch (err) { /* type=search 不一定支援 */ }
     });
 
+    on('#board', 'click', function (e) {
+      var t = e.target;
+      if (t.id === 'board-more') { board.expanded = true; renderBoard(); return; }
+      if (t.id === 'board-less') { board.expanded = false; renderBoard(); return; }
+      if (t.id === 'board-seen') { markAllSeen(); renderBoard(); return; }
+    });
+
     window.addEventListener('resize', syncStickyOffset);
   }
 
@@ -877,9 +1060,13 @@
 
     bind();
     load();
+    loadNotices();
 
     if (CFG.AUTO_REFRESH_MS > 0) {
-      setInterval(function () { load(state.data ? state.data.sheet : ''); }, CFG.AUTO_REFRESH_MS);
+      setInterval(function () {
+        load(state.data ? state.data.sheet : '');
+        loadNotices();
+      }, CFG.AUTO_REFRESH_MS);
     }
   }
 
