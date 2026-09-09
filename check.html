@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GAS 連線檢測 · PGY 訓練課程表</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🩺</text></svg>">
-<link rel="stylesheet" href="assets/style.css?v=2026-09-08.14">
+<link rel="stylesheet" href="assets/style.css?v=2026-09-09.1">
 <style>
   .case{border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden;background:var(--panel-2)}
   .case>h3{margin:0;padding:10px 14px;font-size:13.5px;display:flex;align-items:center;gap:9px;
@@ -46,7 +46,7 @@
   <p class="foot">此頁只做連線診斷，不會寫入任何資料。</p>
 </main>
 
-<script src="assets/config.js?v=2026-09-08.14"></script>
+<script src="assets/config.js?v=2026-09-09.1"></script>
 <script>
 (function () {
   'use strict';
@@ -161,7 +161,31 @@
               '\n\n第一列資料：\n' + (r0 ? preview(r0) : '（沒有資料列）'));
             results.rows = (s.rows || []).length;
             results.months = m.length;
-            verdict(results);
+
+            // 5. 公告欄：順便確認「公告」工作表存在、表頭讀得出來
+            var nsheet = String(CFG.NOTICE_SHEET == null ? '公告' : CFG.NOTICE_SHEET).trim();
+            var c5 = card('5. 讀取公告欄（action=notices）');
+            if (!nsheet) {
+              c5.done(true, '公告欄已在 assets/config.js 關閉（NOTICE_SHEET 是空字串），兩頁都不會顯示公告欄。');
+              return verdict(results);
+            }
+            return get({ action: 'notices', sheet: nsheet, t: Date.now() })
+              .then(function (n) {
+                if (!n.ok) throw new Error(n.error);
+                if (n.missing) {
+                  c5.done(true,
+                    '試算表裡還沒有「' + nsheet + '」這個工作表，所以網頁不會顯示公告欄（這不算錯誤）。\n\n' +
+                    '要開始用公告欄：新增一個工作表叫「' + nsheet + '」，第 1 列填上\n' +
+                    '日期、分類、標題、內容、置頂、顯示、對象、張貼者\n' +
+                    '（用不到的欄可以不放），第 2 列起一則公告一列。');
+                } else {
+                  var list = n.notices || [];
+                  c5.done(true, '工作表：' + n.sheet + '\n可顯示的公告：' + list.length + ' 則\n\n' +
+                    '第一則：\n' + (list.length ? preview(list[0]) : '（沒有資料列）'));
+                }
+                verdict(results);
+              })
+              .catch(function (e) { c5.done(false, e.message); verdict(results); });
           });
         })
         .catch(function (e) { c3.done(false, e.message); verdict(results); });

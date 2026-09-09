@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
 <!-- ?v= 是版本參數：改過 assets/ 裡的檔案就把這串一起改掉，
      瀏覽器才不會沿用舊快取。頁尾會顯示目前載入的版本。 -->
-<link rel="stylesheet" href="assets/style.css?v=2026-09-08.14">
+<link rel="stylesheet" href="assets/style.css?v=2026-09-09.1">
 </head>
 <body>
 
@@ -48,6 +48,10 @@
 <main class="wrap">
 
   <div id="banner"></div>
+
+  <!-- 公告欄：內容寫在 Google Sheets 的「公告」工作表，
+       沒有任何一則（或還沒建那個工作表）時 app.js 會把它隱藏起來。 -->
+  <section class="panel board" id="board" hidden></section>
 
   <section class="panel filters">
     <div class="filter-grid">
@@ -97,8 +101,8 @@
   <p class="foot">PGY 訓練課程表 · 前端以 Google Sheets 為單一資料來源<span id="build"></span></p>
 </main>
 
-<script src="assets/config.js?v=2026-09-08.14"></script>
-<script src="assets/sample-data.js?v=2026-09-08.14"></script>
-<script src="assets/app.js?v=2026-09-08.14"></script>
+<script src="assets/config.js?v=2026-09-09.1"></script>
+<script src="assets/sample-data.js?v=2026-09-09.1"></script>
+<script src="assets/app.js?v=2026-09-09.1"></script>
 </body>
 </html>

@@ -16,6 +16,7 @@
  *  ── API ──────────────────────────────────────────────────────────────
  *  GET  ?action=schedule&sheet=工作表名稱      取得課表 JSON
  *  GET  ?action=sheets                        取得所有工作表名稱
+ *  GET  ?action=notices[&sheet=公告]           取得公告欄留言 JSON
  *  GET  ?action=ping                          健康檢查
  *       任何 GET 加上 &callback=fn 會回傳 JSONP（避開瀏覽器 CORS）
  *
@@ -50,6 +51,42 @@ var WRITE_TOKEN = '';
 var CACHE_SECONDS = 30;
 
 
+/* ---- 公告欄（留言板）---------------------------------------------------
+ *  在同一份試算表新增一個工作表（預設叫「公告」），第 1 列放表頭：
+ *
+ *    日期        2026/9/9            留空會排在最後面
+ *    分類        排程異動            自由填寫，會變成一個小標籤
+ *    標題        9 月急診梯次調整
+ *    內容        改成…（可換行）      只填內容不填標題也可以
+ *    置頂        是                   是／Y／TRUE 會固定排在最上面
+ *    顯示        否                   填「否／N／FALSE」就暫時不顯示，不必刪除整列
+ *    對象        管理者               管理者=只有 index.html 看得到；
+ *                                     公開=只有 office.html；留空=兩頁都顯示
+ *    張貼者      教學部
+ *
+ *  欄位順序不拘，以名稱比對；不需要的欄整欄不放也可以。
+ *  找不到這個工作表時回傳空陣列（不是錯誤），前端就整塊不顯示。
+ * --------------------------------------------------------------------- */
+
+/** 公告欄工作表名稱（前端可用 ?sheet= 覆寫） */
+var NOTICE_SHEET = '公告';
+
+/** 公告欄表頭別名：第一個名稱是標準欄名，後面都是可接受的寫法 */
+var NOTICE_ALIASES = {
+  date:     ['日期', '時間', '公告日期', 'date'],
+  tag:      ['分類', '類別', '標籤', 'tag', 'type'],
+  title:    ['標題', '主旨', 'title'],
+  body:     ['內容', '訊息', '留言', '說明', 'body', 'message'],
+  pin:      ['置頂', '重要', 'pin', 'top'],
+  show:     ['顯示', '啟用', '狀態', 'show'],
+  audience: ['對象', '顯示頁面', '範圍', 'audience'],
+  author:   ['張貼者', '發布者', '公告者', '作者', 'author']
+};
+
+/** 公告欄快取秒數；比課表短，改完留言比較快看得到 */
+var NOTICE_CACHE_SECONDS = 15;
+
+
 /* ======================= 進入點 ======================= */
 
 function doGet(e) {
@@ -62,6 +99,9 @@ function doGet(e) {
         break;
       case 'sheets':
         out = { ok: true, sheets: listSheets_() };
+        break;
+      case 'notices':
+        out = getNotices_(p.sheet, p.nocache === '1');
         break;
       case 'schedule':
       default:
@@ -259,6 +299,99 @@ function nowStr_() {
 }
 
 
+/* ======================= 公告欄（留言板） ======================= */
+
+/**
+ * 讀出公告欄。
+ * 回傳：{ ok, sheet, missing, notices[{date,ts,tag,title,body,pin,audience,author}], updatedAt }
+ *
+ * 找不到工作表時回傳 missing:true 與空陣列，而不是丟錯 ——
+ * 還沒建「公告」分頁的人，網頁只是不顯示公告欄，其他功能照常。
+ */
+function getNotices_(sheetName, noCache) {
+  var name = String(sheetName || NOTICE_SHEET || '').trim();
+  var cache = CacheService.getScriptCache();
+  var ck = 'pgy_notice_' + name;
+
+  if (NOTICE_CACHE_SECONDS > 0 && !noCache) {
+    var hit = cache.get(ck);
+    if (hit) return JSON.parse(hit);
+  }
+
+  var sh = name ? book_().getSheetByName(name) : null;
+  if (!sh) return { ok: true, sheet: name, missing: true, notices: [], updatedAt: nowStr_() };
+
+  var out = { ok: true, sheet: name, missing: false, notices: [], updatedAt: nowStr_() };
+  var lastRow = sh.getLastRow(), lastCol = sh.getLastColumn();
+  if (lastRow < HEADER_ROW + 1 || lastCol < 1) return out;
+
+  /* --- 表頭比對：以別名找出各欄位置，找不到就當作沒有這一欄 --- */
+  var header = sh.getRange(HEADER_ROW, 1, 1, lastCol).getValues()[0]
+    .map(function (h) { return String(h == null ? '' : h).trim().toLowerCase(); });
+  var idx = {};
+  Object.keys(NOTICE_ALIASES).forEach(function (field) {
+    NOTICE_ALIASES[field].forEach(function (alias) {
+      if (field in idx) return;
+      var at = header.indexOf(String(alias).toLowerCase());
+      if (at >= 0) idx[field] = at;
+    });
+  });
+
+  var n = lastRow - HEADER_ROW;
+  var rng = sh.getRange(HEADER_ROW + 1, 1, n, lastCol);
+  var disp = rng.getDisplayValues();
+  var vals = rng.getValues();
+
+  function cell(r, field) {
+    return (field in idx) ? String(disp[r][idx[field]] || '').trim() : '';
+  }
+
+  for (var r = 0; r < n; r++) {
+    var title = cell(r, 'title');
+    var body = cell(r, 'body');
+    if (!title && !body) continue;                       // 標題與內容都空 = 空白列
+    if (isNo_(cell(r, 'show'))) continue;                // 顯示欄填「否」= 暫時不公告
+
+    /* 日期：畫面上顯示使用者自己打的樣子，排序另外用時間戳。
+       手動輸入的文字日期（2026/9/9、2026-09-09）也試著解析出時間戳。 */
+    var rawDate = (idx.date != null) ? vals[r][idx.date] : '';
+    var ts = 0;
+    if (rawDate instanceof Date) ts = rawDate.getTime();
+    else {
+      var m = String(rawDate == null ? '' : rawDate).match(/(\d{4})\s*[\/\-.年]\s*(\d{1,2})(?:\s*[\/\-.月]\s*(\d{1,2}))?/);
+      if (m) ts = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3] || 1)).getTime();
+    }
+
+    out.notices.push({
+      date: cell(r, 'date'),
+      ts: ts,
+      tag: cell(r, 'tag'),
+      title: title,
+      body: body,
+      pin: isYes_(cell(r, 'pin')),
+      audience: cell(r, 'audience'),
+      author: cell(r, 'author'),
+      _row: HEADER_ROW + 1 + r
+    });
+  }
+
+  if (NOTICE_CACHE_SECONDS > 0) {
+    try { cache.put(ck, JSON.stringify(out), NOTICE_CACHE_SECONDS); } catch (e) { /* 太大就不快取 */ }
+  }
+  return out;
+}
+
+/** 「是／Y／TRUE／1／V／✓」都算是；空白算否 */
+function isYes_(v) {
+  return /^(是|y|yes|true|1|v|✓|o)$/i.test(String(v == null ? '' : v).trim());
+}
+
+/** 「否／N／FALSE／0／停用／隱藏」都算否；空白算是（預設顯示） */
+function isNo_(v) {
+  return /^(否|n|no|false|0|x|停用|隱藏|關)$/i.test(String(v == null ? '' : v).trim());
+}
+
+
 /* ======================= 寫入 ======================= */
 
 /** 依 ID_COL（簡碼）找出該列列號與月份欄對應 */
@@ -333,7 +466,7 @@ function onOpen() {
 
 function clearCache() {
   var c = CacheService.getScriptCache();
-  listSheets_().forEach(function (n) { c.remove('pgy_v2_' + n); });
+  listSheets_().forEach(function (n) { c.remove('pgy_v2_' + n); c.remove('pgy_notice_' + n); });
   SpreadsheetApp.getActive().toast('已清除 API 快取', 'PGY 課程表', 4);
 }
 
