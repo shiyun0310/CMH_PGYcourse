@@ -926,7 +926,7 @@
             (seen[id] ? '' : '<span class="board-new">NEW</span>') +
           '</div>' +
           (n.body ? '<div class="board-text">' + noticeText(n.body) + '</div>' : '') +
-          (n.author ? '<div class="board-meta">' + esc(n.author) + '　公告</div>' : '') +
+          (n.author ? '<div class="board-meta">' + esc(n.author) + '</div>' : '') +
         '</li>';
       }).join('') + '</ul>';
     box.hidden = false;
