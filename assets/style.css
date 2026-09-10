@@ -44,6 +44,9 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
+/* .btn 等元素自己指定了 display，會蓋掉瀏覽器對 hidden 屬性的預設處理，
+   所以這裡補一條 —— 程式用 el.hidden 切換顯示才會生效。 */
+[hidden]{display:none!important}
 body{
   font-family:var(--sans);
   background:var(--bg);

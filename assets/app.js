@@ -591,18 +591,28 @@
 
   /* ------------------------------------------------------- 檢視：個人 */
   function viewPerson() {
-    var months = state.data.monthCols;
     var q = String(state.personQuery || '').trim();
 
+    /* 查詢框與查詢結果分成兩塊：打字時只重繪 #p-results，
+     * 輸入框本身完全不動 —— 中文輸入法在組字時若把輸入框換掉，
+     * 組字會被打斷，只剩沒組完的注音符號留在欄位裡。 */
     var box = '<div class="view-head"><div><h2>個人輪訓時程</h2>' +
       '<div class="sub">輸入姓名或人事號查詢單一受訓醫師</div></div>' +
       '<div class="pfind">' +
       '<input id="p-q" type="search" placeholder="姓名或人事號…" autocomplete="off" value="' + esc(q) + '">' +
-      (q ? '<button class="btn" id="p-clear">清除</button>' : '') +
+      '<button class="btn" id="p-clear"' + (q ? '' : ' hidden') + '>清除</button>' +
       '</div></div>';
 
+    return box + '<div id="p-results">' + personResults() + '</div>';
+  }
+
+  /* 個人時程的查詢結果（不含查詢框） */
+  function personResults() {
+    var months = state.data.monthCols;
+    var q = String(state.personQuery || '').trim();
+
     if (!q) {
-      return box + '<div class="empty-state"><div class="big">🔎</div>' +
+      return '<div class="empty-state"><div class="big">🔎</div>' +
         '<div>請先輸入<b>姓名</b>或<b>人事號</b></div>' +
         '<div style="margin-top:6px;font-size:12.5px">也可以在「總覽表」直接點受訓醫師的姓名</div></div>';
     }
@@ -614,10 +624,10 @@
     });
 
     if (!rows.length) {
-      return box + emptyState('找不到「' + q + '」，請確認姓名或人事號', '🔎');
+      return emptyState('找不到「' + q + '」，請確認姓名或人事號', '🔎');
     }
 
-    var h = box + '<div class="plist">';
+    var h = '<div class="plist">';
     rows.forEach(function (r) {
       var tally = {};
       months.forEach(function (m) {
@@ -1236,7 +1246,11 @@
         if (!hasView('person')) return;
         state.personQuery = p.dataset.person; state.view = 'person'; render(); return;
       }
-      if (e.target.id === 'p-clear') { state.personQuery = ''; render(); return; }
+      if (e.target.id === 'p-clear') {
+        withEl('#p-q', function (el) { el.value = ''; el.focus(); });
+        personQueryChanged('');
+        return;
+      }
       if (e.target.id === 'btn-xlsx') { exportXlsx(); return; }
       if (e.target.id === 'btn-csv') { exportCsv(); return; }
       if (e.target.id === 'btn-print') { window.print(); return; }
@@ -1255,16 +1269,28 @@
       if (e.target.id === 'm-pick') { state.monthIndex = Number(e.target.value); render(); }
     });
 
-    // #view 每次都整段重繪，輸入框會被換掉，所以重繪後要把焦點與游標位置還原
+    /* 個人時程的查詢框。
+     * 中文輸入法（注音、拼音、手寫）在選字前會先在欄位裡放一段「組字中」的文字，
+     * 這段期間若把畫面重繪、輸入框被換掉，組字就會被打斷 ——
+     * 欄位裡只剩沒組完的注音符號，看起來就像打字打不完整。
+     * 所以：組字期間完全不動畫面，等 compositionend（選完字）再更新；
+     * 平時打英數字也只重繪結果那一塊，輸入框自始至終不換掉。 */
+    var composing = false;
+
+    on('#view', 'compositionstart', function (e) {
+      if (e.target.id === 'p-q') composing = true;
+    });
+
+    on('#view', 'compositionend', function (e) {
+      if (e.target.id !== 'p-q') return;
+      composing = false;
+      personQueryChanged(e.target.value);
+    });
+
     on('#view', 'input', function (e) {
       if (e.target.id !== 'p-q') return;
-      var pos = e.target.selectionStart;
-      state.personQuery = e.target.value;
-      render();
-      var el = $('#p-q');
-      if (!el) return;
-      el.focus();
-      try { el.setSelectionRange(pos, pos); } catch (err) { /* type=search 不一定支援 */ }
+      if (composing || e.isComposing) return;      // 組字中，等選完字再說
+      personQueryChanged(e.target.value);
     });
 
     on('#board', 'click', function (e) {
@@ -1275,6 +1301,16 @@
     });
 
     window.addEventListener('resize', syncStickyOffset);
+  }
+
+  /* 查詢字串變了：只換結果那一塊，輸入框與游標位置都不受影響 */
+  function personQueryChanged(value) {
+    if (value === state.personQuery) return;
+    state.personQuery = value;
+    var res = $('#p-results');
+    if (!res) { render(); return; }             // 不在個人時程頁就照舊整頁重繪
+    res.innerHTML = personResults();
+    withEl('#p-clear', function (b) { b.hidden = !String(value).trim(); });
   }
 
   /* ------------------------------------------------------------ 啟動 */
