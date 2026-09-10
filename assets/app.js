@@ -681,7 +681,8 @@
       body = '<div class="view-head"><div><h2>' + esc(state.data.sheet || '輪訓總覽') + '</h2>' +
         '<div class="sub">' + rows.length + ' 位受訓醫師 ／ ' + months.length + ' 個月' +
         (state.data.updatedAt ? '　·　更新於 ' + esc(state.data.updatedAt) : '') + '</div></div>' +
-        '<div style="display:flex;gap:8px"><button class="btn" id="btn-csv">匯出 CSV</button>' +
+        '<div style="display:flex;gap:8px"><button class="btn" id="btn-xlsx" title="下載的 Excel 會保留畫面上的色塊">匯出 Excel</button>' +
+        '<button class="btn" id="btn-csv" title="純文字表格，不含顏色">匯出 CSV</button>' +
         '<button class="btn" id="btn-print">列印 / PDF</button></div></div>' + viewGrid();
     } else if (state.view === 'month') {
       body = viewMonth();
@@ -737,13 +738,248 @@
       }).join(',');
     }).join('\r\n');
 
-    var blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    saveBlob(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }), fileBase() + '.csv');
+  }
+
+  /* 匯出檔名：PGY課程表_工作表名稱（去掉檔名不能用的字元） */
+  function fileBase() {
+    return 'PGY課程表_' + ((state.data && state.data.sheet) || 'export').replace(/[\\/:*?"<>|]/g, '');
+  }
+
+  function saveBlob(blob, filename) {
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'PGY課程表_' + (d.sheet || 'export').replace(/[\\/:*?"<>|]/g, '') + '.csv';
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  /* ------------------------------------------- 匯出 Excel（保留色塊）
+   * CSV 是純文字，存不了顏色 —— 要讓下載的檔案跟試算表一樣看得到色塊，
+   * 就得輸出真正的 .xlsx。.xlsx 其實是一個 zip 包著幾個 XML，
+   * 所以這裡自己寫最小可用的 zip 與 XML，不載入任何外部程式庫：
+   * 院內網路連不連得到 CDN 都不影響，也少一個要跟著更新的相依套件。
+   *
+   * 顏色與文字色沿用網頁上同一套判斷（colorOf / inkOn），
+   * 所以 Excel 裡看到的配色與畫面上一致；欄序也與總覽表相同。
+   * ------------------------------------------------------------------ */
+
+  var CRC32_TABLE = (function () {
+    var t = new Uint32Array(256), c, n, k;
+    for (n = 0; n < 256; n++) {
+      c = n;
+      for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+
+  function crc32(bytes) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) c = CRC32_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function utf8Bytes(str) { return new TextEncoder().encode(str); }
+
+  /* 以「不壓縮（store）」方式打包 zip —— xlsx 允許不壓縮，
+     省下一整個壓縮程式庫，課表這種大小的檔案也不需要壓。 */
+  function zipStore(files) {
+    var parts = [], central = [], offset = 0;
+
+    // zip 的時間是 DOS 格式：日期 0 是無效值，有些工具會抱怨，所以填上現在時間
+    var now = new Date();
+    var dosTime = (now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1);
+    var dosDate = ((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate();
+
+    files.forEach(function (f) {
+      var name = utf8Bytes(f.name), data = f.data, crc = crc32(data);
+
+      var h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true);
+      h.setUint16(4, 20, true);            // 需要的版本
+      h.setUint16(6, 0x0800, true);        // 檔名以 UTF-8 編碼
+      h.setUint16(8, 0, true);             // 0 = 不壓縮
+      h.setUint16(10, dosTime, true);
+      h.setUint16(12, dosDate, true);
+      h.setUint32(14, crc, true);
+      h.setUint32(18, data.length, true);
+      h.setUint32(22, data.length, true);
+      h.setUint16(26, name.length, true);
+      parts.push(new Uint8Array(h.buffer), name, data);
+
+      var c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true);
+      c.setUint16(4, 20, true);
+      c.setUint16(6, 20, true);
+      c.setUint16(8, 0x0800, true);
+      c.setUint16(10, 0, true);            // 0 = 不壓縮
+      c.setUint16(12, dosTime, true);
+      c.setUint16(14, dosDate, true);
+      c.setUint32(16, crc, true);
+      c.setUint32(20, data.length, true);
+      c.setUint32(24, data.length, true);
+      c.setUint16(28, name.length, true);
+      c.setUint32(42, offset, true);       // 這個檔案的起始位置
+      central.push(new Uint8Array(c.buffer), name);
+
+      offset += 30 + name.length + data.length;
+    });
+
+    var cdSize = central.reduce(function (n, b) { return n + b.length; }, 0);
+    var end = new DataView(new ArrayBuffer(22));
+    end.setUint32(0, 0x06054b50, true);
+    end.setUint16(8, files.length, true);
+    end.setUint16(10, files.length, true);
+    end.setUint32(12, cdSize, true);
+    end.setUint32(16, offset, true);
+
+    return new Blob(parts.concat(central, [new Uint8Array(end.buffer)]),
+      { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+
+  function xmlEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')     // 控制字元會讓 Excel 拒開
+      .replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c];
+      });
+  }
+
+  /* #FFC000 → FFFFC000（Excel 的顏色是 AARRGGBB） */
+  function argb(hex) {
+    var h = String(hex || '').replace('#', '');
+    if (h.length === 3) h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    return 'FF' + (h.length === 6 ? h.toUpperCase() : 'FFFFFF');
+  }
+
+  /* 0 → A、25 → Z、26 → AA */
+  function colName(i) {
+    var s = '';
+    for (i += 1; i > 0; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + (i - 1) % 26) + s;
+    return s;
+  }
+
+  function exportXlsx() {
+    var d = state.data, months = d.monthCols, rows = filteredRows();
+    var fixed = FIXED_ORDER.filter(function (c) { return d.fixedCols.indexOf(c) >= 0; });
+    var headers = fixed.concat(months.map(function (m) { return m.label; }));
+
+    /* --- 樣式：一種底色一個 fill；fill 0、1 是 Excel 規定的固定兩格 --- */
+    var fills = [
+      '<fill><patternFill patternType="none"/></fill>',
+      '<fill><patternFill patternType="gray125"/></fill>',
+      '<fill><patternFill patternType="solid"><fgColor rgb="FFF1F3F5"/><bgColor indexed="64"/></patternFill></fill>'
+    ];
+    var xfs = [
+      '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>',
+      '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>',
+      '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center"/></xf>'
+    ];
+    var HEAD_XF = 1, TEXT_XF = 2;
+
+    var colorXf = {};
+    function xfForColor(hex) {
+      var key = argb(hex);
+      if (key in colorXf) return colorXf[key];
+      fills.push('<fill><patternFill patternType="solid"><fgColor rgb="' + key +
+        '"/><bgColor indexed="64"/></patternFill></fill>');
+      // 底色深就用白字，與網頁上同一個判斷，不會出現黑底黑字
+      xfs.push('<xf numFmtId="0" fontId="' + (inkOn(hex) === INK_LIGHT ? 3 : 1) +
+        '" fillId="' + (fills.length - 1) + '" borderId="1" xfId="0"' +
+        ' applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1">' +
+        '<alignment horizontal="center" vertical="center"/></xf>');
+      colorXf[key] = xfs.length - 1;
+      return colorXf[key];
+    }
+
+    function cell(ref, xf, v) {
+      v = String(v == null ? '' : v);
+      if (!v) return '<c r="' + ref + '" s="' + xf + '"/>';
+      return '<c r="' + ref + '" s="' + xf + '" t="inlineStr"><is><t xml:space="preserve">' +
+        xmlEsc(v) + '</t></is></c>';
+    }
+
+    var body = ['<row r="1" ht="22" customHeight="1">' + headers.map(function (h, i) {
+      return cell(colName(i) + '1', HEAD_XF, h);
+    }).join('') + '</row>'];
+
+    rows.forEach(function (r, ri) {
+      var rn = ri + 2;
+      var cells = fixed.map(function (c, i) { return cell(colName(i) + rn, TEXT_XF, r[c]); });
+      months.forEach(function (m, i) {
+        var mc = r.months[m.key], ref = colName(fixed.length + i) + rn;
+        cells.push(mc ? cell(ref, xfForColor(colorOf(mc)), mc.value) : cell(ref, TEXT_XF, ''));
+      });
+      body.push('<row r="' + rn + '">' + cells.join('') + '</row>');
+    });
+
+    var head = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+
+    /* 凍結表頭那一列與左邊的固定欄，捲到右邊的月份時還看得出是誰 */
+    var sheetXml = head +
+      '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<dimension ref="A1:' + colName(headers.length - 1) + (rows.length + 1) + '"/>' +
+      '<sheetViews><sheetView workbookViewId="0"><pane xSplit="' + fixed.length + '" ySplit="1" topLeftCell="' +
+      colName(fixed.length) + '2" activePane="bottomRight" state="frozen"/></sheetView></sheetViews>' +
+      '<sheetFormatPr defaultRowHeight="18"/>' +
+      '<cols><col min="1" max="' + fixed.length + '" width="11" customWidth="1"/>' +
+      '<col min="' + (fixed.length + 1) + '" max="' + headers.length + '" width="12" customWidth="1"/></cols>' +
+      '<sheetData>' + body.join('') + '</sheetData>' +
+      '<pageMargins left="0.4" right="0.4" top="0.6" bottom="0.6" header="0.3" footer="0.3"/>' +
+      '</worksheet>';
+
+    var stylesXml = head +
+      '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">' +
+      '<fonts count="4">' +
+        '<font><sz val="11"/><color rgb="FF1B2432"/><name val="Calibri"/></font>' +
+        '<font><b/><sz val="11"/><color rgb="FF1B2432"/><name val="Calibri"/></font>' +
+        '<font><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>' +
+        '<font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font>' +
+      '</fonts>' +
+      '<fills count="' + fills.length + '">' + fills.join('') + '</fills>' +
+      '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' +
+      '<border><left style="thin"><color rgb="FFD9D9D9"/></left><right style="thin"><color rgb="FFD9D9D9"/></right>' +
+      '<top style="thin"><color rgb="FFD9D9D9"/></top><bottom style="thin"><color rgb="FFD9D9D9"/></bottom>' +
+      '<diagonal/></border></borders>' +
+      '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+      '<cellXfs count="' + xfs.length + '">' + xfs.join('') + '</cellXfs>' +
+      '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>' +
+      '<dxfs count="0"/>' +
+      '<tableStyles count="0" defaultTableStyle="TableStyleMedium9" defaultPivotStyle="PivotStyleLight16"/>' +
+      '</styleSheet>';
+
+    // Excel 的工作表名稱上限 31 字，且不能有 : \ / ? * [ ]
+    var tabName = xmlEsc(String(d.sheet || '課程表').replace(/[:\\\/?*\[\]]/g, '-').slice(0, 31));
+
+    var pkg = [
+      { name: '[Content_Types].xml', data: utf8Bytes(head +
+        '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+        '<Default Extension="xml" ContentType="application/xml"/>' +
+        '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+        '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+        '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+        '</Types>') },
+      { name: '_rels/.rels', data: utf8Bytes(head +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+        '</Relationships>') },
+      { name: 'xl/workbook.xml', data: utf8Bytes(head +
+        '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"' +
+        ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+        '<sheets><sheet name="' + tabName + '" sheetId="1" r:id="rId1"/></sheets></workbook>') },
+      { name: 'xl/_rels/workbook.xml.rels', data: utf8Bytes(head +
+        '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+        '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+        '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+        '</Relationships>') },
+      { name: 'xl/styles.xml', data: utf8Bytes(stylesXml) },
+      { name: 'xl/worksheets/sheet1.xml', data: utf8Bytes(sheetXml) }
+    ];
+
+    saveBlob(zipStore(pkg), fileBase() + '.xlsx');
   }
 
   /* ------------------------------------------------------------ 載入 */
@@ -1001,6 +1237,7 @@
         state.personQuery = p.dataset.person; state.view = 'person'; render(); return;
       }
       if (e.target.id === 'p-clear') { state.personQuery = ''; render(); return; }
+      if (e.target.id === 'btn-xlsx') { exportXlsx(); return; }
       if (e.target.id === 'btn-csv') { exportCsv(); return; }
       if (e.target.id === 'btn-print') { window.print(); return; }
       var u = e.target.closest('[data-unit]');
