@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>115 學年度 畢業後一般醫學訓練 PGY 醫師訓練課程表</title>
 <meta name="description" content="115 學年度 PGY 輪訓課程表，只保留總覽表與月份檢視，資料以 Google Sheets 為主。">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔲</text></svg>">
 <!--
   115PGY.html — 精簡版
   由 index.html 裁減而來：只保留「總覽表」與「月份檢視」兩個頁籤，
@@ -13,6 +13,8 @@
 
   · 與 index.html / office.html 共用 assets/ 底下同一份
     config.js / app.js / style.css，改任何一邊的功能三頁都會同步。
+  · <body class="gray"> 套用灰色系色票（index.html 粉色、office.html 橘色），
+    整頁含表格、分頁與連結都會一起換色，深／淺色模式各有一組。
   · app.js 對不存在的介面元素會安靜跳過：
     沒有 #board 就不會去讀「公告」工作表，
     沒有個人時程頁籤，總覽表的姓名會自動變成純文字而非可點連結。
@@ -26,22 +28,23 @@
 <!-- data-unit-filter：讓月份檢視在標題下方顯示科別複選按鈕列。
      上方的篩選列是「科別」單選（內、外、婦…），這排按鈕是「訓練單位」複選
      （選-眼科、社-郭綜…），兩者粒度不同，可以一起使用。 -->
-<body data-unit-filter>
+<body class="gray" data-unit-filter>
 
 <header class="top">
   <div class="wrap">
     <div class="brand">
-      <svg class="mark" viewBox="0 0 48 44" role="img" aria-label="PGY">
+      <!-- 正方形標誌。viewBox 是正方形，外框 .mark 為 48×44，
+           預設的 preserveAspectRatio 會等比縮放並置中，不會被壓扁。 -->
+      <svg class="mark" viewBox="0 0 44 44" role="img" aria-label="PGY">
         <defs>
-          <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id="sq" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stop-color="#FFFFFF"/>
-            <stop offset="1" stop-color="#FFD9E4"/>
+            <stop offset="1" stop-color="#DFE4EA"/>
           </linearGradient>
         </defs>
-        <path d="M24 41.5C24 41.5 3.5 28.2 3.5 15.2 3.5 8.2 9 3.5 14.9 3.5c4 0 7.3 2.2 9.1 5.2 1.8-3 5.1-5.2 9.1-5.2 5.9 0 11.4 4.7 11.4 11.7 0 13-20.5 26.3-20.5 26.3Z"
-              fill="url(#hg)"/>
-        <text x="24" y="22" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif"
-              font-size="12" font-weight="800" letter-spacing="-.3" fill="#A83459">PGY</text>
+        <rect x="3" y="3" width="38" height="38" rx="5" fill="url(#sq)"/>
+        <text x="22" y="27" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif"
+              font-size="12" font-weight="800" letter-spacing="-.3" fill="#43505E">PGY</text>
       </svg>
       <div>
         <h1 id="title">115 學年度 畢業後一般醫學訓練 PGY 醫師訓練課程表</h1>
