@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>115 學年度 畢業後一般醫學訓練 PGY 醫師訓練課程表</title>
+<meta name="description" content="115 學年度 PGY 輪訓課程表，只保留總覽表與月份檢視，資料以 Google Sheets 為主。">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💗</text></svg>">
+<!--
+  115PGY.html — 精簡版
+  由 index.html 裁減而來：只保留「總覽表」與「月份檢視」兩個頁籤，
+  移除個人時程頁籤與公告欄，其餘（頁首、篩選列、錯誤提示、頁尾）維持不變。
+
+  · 與 index.html / office.html 共用 assets/ 底下同一份
+    config.js / app.js / style.css，改任何一邊的功能三頁都會同步。
+  · app.js 對不存在的介面元素會安靜跳過：
+    沒有 #board 就不會去讀「公告」工作表，
+    沒有個人時程頁籤，總覽表的姓名會自動變成純文字而非可點連結。
+  · 保留 #banner：正常連線時它是空的完全看不到，
+    只有在讀不到 Google Sheets、退回離線範例資料時才會顯示警告 ——
+    少了它，使用者會把範例資料誤當成正式課表。
+  · ?v= 是版本參數，改過 assets/ 內容要一併更新，否則瀏覽器會用舊快取。
+-->
+<link rel="stylesheet" href="assets/style.css?v=2026-09-10.2">
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 48 44" role="img" aria-label="PGY">
+        <defs>
+          <linearGradient id="hg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#FFFFFF"/>
+            <stop offset="1" stop-color="#FFD9E4"/>
+          </linearGradient>
+        </defs>
+        <path d="M24 41.5C24 41.5 3.5 28.2 3.5 15.2 3.5 8.2 9 3.5 14.9 3.5c4 0 7.3 2.2 9.1 5.2 1.8-3 5.1-5.2 9.1-5.2 5.9 0 11.4 4.7 11.4 11.7 0 13-20.5 26.3-20.5 26.3Z"
+              fill="url(#hg)"/>
+        <text x="24" y="22" text-anchor="middle" font-family="'Noto Sans TC','PingFang TC',sans-serif"
+              font-size="12" font-weight="800" letter-spacing="-.3" fill="#A83459">PGY</text>
+      </svg>
+      <div>
+        <h1 id="title">115 學年度 畢業後一般醫學訓練 PGY 醫師訓練課程表</h1>
+        <ul class="notice">
+          <li>本頁內容僅供本院 PGY 醫師及相關教學業務人員查閱，內容涉及院內人員及訓練相關資訊，請勿作其他用途。</li>
+          <li>本平台將保留頁面瀏覽之連線 IP 紀錄，以維護資訊安全及掌握異常使用情形，請依規範使用本頁內容。</li>
+          <li>請妥善保管本頁連結，勿任意轉傳、公開、截圖或提供予非相關人員使用。</li>
+          <li>如發現資料有誤或連結遭不當分享，請立即通知教學部。</li>
+        </ul>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="pill is-loading" id="status"><span class="dot"></span>讀取中…</span>
+      <button class="btn ghost" id="btn-refresh" title="重新向 Google Sheets 取得最新資料">↻ 重新整理</button>
+      <button class="btn ghost" id="btn-theme" title="切換深色 / 淺色">◐ 佈景</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div id="banner"></div>
+
+  <section class="panel filters">
+    <div class="filter-grid">
+      <div class="field grow">
+        <label for="f-q">搜尋（姓名／人事號／簡碼／科別）</label>
+        <input id="f-q" type="search" placeholder="輸入關鍵字…" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f-sheet">工作表</label>
+        <select id="f-sheet"></select>
+      </div>
+      <div class="field">
+        <label for="f-year">學年度</label>
+        <select id="f-year"></select>
+      </div>
+      <div class="field">
+        <label for="f-stage">期程</label>
+        <select id="f-stage"></select>
+      </div>
+      <div class="field">
+        <label for="f-group">組別</label>
+        <select id="f-group"></select>
+      </div>
+      <div class="field">
+        <label for="f-mentor">長期導師</label>
+        <select id="f-mentor"></select>
+      </div>
+      <div class="field">
+        <label>&nbsp;</label>
+        <button class="btn" id="btn-reset">清除條件</button>
+      </div>
+    </div>
+
+    <div class="filter-foot">
+      <div class="chips" id="chips"></div>
+    </div>
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-view="grid">總覽表</button>
+    <button class="tab" data-view="month">月份檢視</button>
+  </nav>
+
+  <section class="panel view" id="view"></section>
+
+  <p class="foot">PGY 訓練課程表 · 前端以 Google Sheets 為單一資料來源<span id="build"></span></p>
+</main>
+
+<script src="assets/config.js?v=2026-09-10.2"></script>
+<script src="assets/sample-data.js?v=2026-09-10.2"></script>
+<script src="assets/app.js?v=2026-09-10.2"></script>
+</body>
+</html>
