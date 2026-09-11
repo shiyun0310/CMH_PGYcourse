@@ -17,7 +17,7 @@
     monthIndex: 0,
     filters: { q: '', 學年度: '', 期程: '', 組別: '', 長期導師: '', cat: '' },   // cat 為單選，'' = 全部
     personQuery: '',     // 個人時程要先輸入姓名或人事號才顯示
-    monthUnits: {}       // 月份檢視的科別複選（office.html 用）
+    monthUnits: {}       // 月份檢視的科別複選（由 <body data-unit-filter> 啟用）
   };
 
   /* ---------------------------------------------------------------- 工具 */
@@ -146,8 +146,9 @@
    * 判斷方式：與組名完全相同就不標；去掉組名後若緊接著括號，那只是註記，可以省略組名；
    * 若緊接著連字號（或其他字），代表是不同的訓練單位，保留原文。 */
   /* 外殼是否要在月份檢視提供科別篩選。
-   * office.html 沒有上方的篩選列，科部助理需要在月份檢視裡自己挑科別；
-   * index.html 已有整頁的篩選列，不重複提供。由 <body data-unit-filter> 指定。 */
+   * 由 <body data-unit-filter> 指定，目前三個外殼都有開。
+   * 上方篩選列的科別是「科別」單選，這排按鈕是「訓練單位」複選，
+   * 粒度不同（內科 vs 選-眼科、社-郭綜），兩者可以疊加使用。 */
   function wantsUnitFilter() {
     return document.body.hasAttribute('data-unit-filter');
   }
