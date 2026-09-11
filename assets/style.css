@@ -514,3 +514,52 @@ body.office .tscroll{max-height:calc(100vh - 196px)}
   body.office .wrap{padding-top:10px}
   body.office .tscroll{max-height:82vh}
 }
+
+/* ---------- 115PGY.html：灰色系 ---------- */
+/* index.html 粉色、office.html 橘色、115PGY.html 灰色，三頁一眼分得出來。
+   色票直接覆寫在 body.gray 上，所以整頁（含表格、分頁、連結）一起換色。
+   深色模式要另外寫一組：[data-theme="dark"] 定義在 :root，
+   若只寫 body.gray 的淺色版，會反過來蓋掉深色模式的色票。 */
+body.gray{
+  --bg:#F5F6F8;
+  --panel:#ffffff;
+  --panel-2:#FAFBFC;
+  --ink:#1B2128;
+  --ink-2:#56606B;
+  --ink-3:#858E99;
+  --line:#E1E5E9;
+  --line-2:#EFF1F4;
+  --brand:#43505E;
+  --brand-2:#5C6B7B;
+  --brand-soft:#EAEEF2;
+  --accent:#7A6A52;
+  --shadow:0 1px 2px rgba(30,40,50,.06),0 8px 24px rgba(30,40,50,.09);
+}
+[data-theme="dark"] body.gray{
+  --bg:#121519;
+  --panel:#1C2026;
+  --panel-2:#232830;
+  --ink:#ECEFF3;
+  --ink-2:#B2BBC5;
+  --ink-3:#87909B;
+  --line:#333A43;
+  --line-2:#2A3038;
+  --brand:#B4C0CC;
+  --brand-2:#CDD7E1;
+  --brand-soft:#2A313A;
+  --accent:#CBB68C;
+  --on-brand:#1C2026;
+}
+
+/* 灰階頁首：深石板灰配白字，全段對比 ≥ 8:1。
+   淺灰底配深字在頁首會與下方面板糊成一片，分不出頁首到哪裡結束。 */
+body.gray .top{
+  background:linear-gradient(135deg,#6A7685 0%,#4B5663 55%,#343C46 100%);
+  color:#fff;
+}
+[data-theme="dark"] body.gray .top{
+  background:linear-gradient(135deg,#3A424D 0%,#2C333B 60%,#212730 100%);
+}
+
+/* 標誌的投影預設帶粉色，灰色系要換成中性灰，否則邊緣會透出一圈粉 */
+body.gray .brand .mark{filter:drop-shadow(0 2px 4px rgba(20,28,38,.30))}
