@@ -68,16 +68,13 @@
 
   <div id="banner"></div>
 
+  <!-- 篩選列只留四個下拉與「清除條件」。
+       沒有搜尋框、工作表下拉與科別色塊 —— app.js 對不存在的元素會安靜跳過，
+       對應的篩選條件永遠是「全部」，不影響其他功能。
+       少了工作表下拉，本頁固定顯示 config.js 的 DEFAULT_SHEET
+       （留空＝試算表的第一個工作表）。 -->
   <section class="panel filters">
     <div class="filter-grid">
-      <div class="field grow">
-        <label for="f-q">搜尋（姓名／人事號／簡碼／科別）</label>
-        <input id="f-q" type="search" placeholder="輸入關鍵字…" autocomplete="off">
-      </div>
-      <div class="field">
-        <label for="f-sheet">工作表</label>
-        <select id="f-sheet"></select>
-      </div>
       <div class="field">
         <label for="f-year">學年度</label>
         <select id="f-year"></select>
@@ -98,10 +95,6 @@
         <label>&nbsp;</label>
         <button class="btn" id="btn-reset">清除條件</button>
       </div>
-    </div>
-
-    <div class="filter-foot">
-      <div class="chips" id="chips"></div>
     </div>
   </section>
 
