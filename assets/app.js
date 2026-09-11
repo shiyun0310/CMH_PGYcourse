@@ -397,8 +397,10 @@
     }
   }
 
+  /* 篩選列的每個元素都是可選的：外殼放了才畫，沒放就安靜跳過。
+   * office.html 整列都沒有；115PGY.html 只留四個下拉與清除條件，
+   * 沒有搜尋框、工作表下拉與科別色塊。 */
   function renderFilters() {
-    if (!$('#chips')) return;              // 純資料版沒有篩選列
     var d = state.data, f = state.filters;
 
     function fillSel(id, values, cur) {
@@ -426,15 +428,16 @@
       sheetSel.parentNode.style.display = 'none';
     }
 
-    $('#chips').innerHTML = catsInUse().map(function (c) {
-      var col = catColor(c.name);
-      // title 保留人月數，滑鼠停留才顯示，chip 上不放數字
-      return '<button class="chip' + (f.cat === c.name ? ' on' : '') + '" data-cat="' + esc(c.name) + '"' +
-        ' title="' + esc(c.name + '　' + c.n + ' 人月') + '">' +
-        '<i class="sw" style="background:' + col + ';border-color:' + ringOn(col) + '"></i>' +
-        esc(c.name) + '</button>';
-    }).join('') || '<span style="color:var(--ink-3);font-size:12.5px">尚無課程資料</span>';
-
+    withEl('#chips', function (box) {
+      box.innerHTML = catsInUse().map(function (c) {
+        var col = catColor(c.name);
+        // title 保留人月數，滑鼠停留才顯示，chip 上不放數字
+        return '<button class="chip' + (f.cat === c.name ? ' on' : '') + '" data-cat="' + esc(c.name) + '"' +
+          ' title="' + esc(c.name + '　' + c.n + ' 人月') + '">' +
+          '<i class="sw" style="background:' + col + ';border-color:' + ringOn(col) + '"></i>' +
+          esc(c.name) + '</button>';
+      }).join('') || '<span style="color:var(--ink-3);font-size:12.5px">尚無課程資料</span>';
+    });
   }
 
   /* ------------------------------------------------------- 檢視：總覽表 */
