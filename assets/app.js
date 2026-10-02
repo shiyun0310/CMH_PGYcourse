@@ -398,7 +398,7 @@
   }
 
   /* 篩選列的每個元素都是可選的：外殼放了才畫，沒放就安靜跳過。
-   * office.html 整列都沒有；115PGY.html 只留四個下拉與清除條件，
+   * office.html 只留長期導師一個下拉；115PGY.html 只留四個下拉與清除條件，
    * 沒有搜尋框、工作表下拉與科別色塊。 */
   function renderFilters() {
     var d = state.data, f = state.filters;
