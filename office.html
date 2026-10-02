@@ -9,7 +9,8 @@
 <!--
   office.html — 純資料版
   保留頁首與總覽表／月份檢視兩個頁籤，
-  不放篩選列與頁尾，適合以 iframe 嵌入其他系統或內部網頁。
+  篩選列只放「長期導師」一個下拉（讓導師直接找自己的學員），
+  不放頁尾，適合以 iframe 嵌入其他系統或內部網頁。
   整體採橘色系（index.html 為粉色系），兩頁一眼分得出來。
 
   · 與 index.html 共用 assets/ 底下同一份 config.js / app.js / style.css，
@@ -59,6 +60,17 @@
        試算表的「對象」欄留空＝兩頁都顯示，填「公開」＝只顯示在這一頁。 -->
   <section class="panel board" id="board" hidden></section>
 
+  <!-- 篩選列只留長期導師：選項由 app.js 依試算表的「長期導師」欄自動產生，
+       選「全部」即取消篩選，總覽表與月份檢視都會跟著篩。 -->
+  <section class="panel filters">
+    <div class="filter-grid">
+      <div class="field">
+        <label for="f-mentor">長期導師</label>
+        <select id="f-mentor"></select>
+      </div>
+    </div>
+  </section>
+
   <nav class="tabs" id="tabs">
     <button class="tab on" data-view="grid">總覽表</button>
     <button class="tab" data-view="month">月份檢視</button>
@@ -69,6 +81,6 @@
 
 <script src="assets/config.js?v=2026-09-10.2"></script>
 <script src="assets/sample-data.js?v=2026-09-10.2"></script>
-<script src="assets/app.js?v=2026-10-02.1"></script>
+<script src="assets/app.js?v=2026-10-02.2"></script>
 </body>
 </html>
