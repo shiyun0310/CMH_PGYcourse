@@ -997,6 +997,21 @@
   }
 
   /* ------------------------------------------------------------ 載入 */
+  /* 月份檢視預設停在「今天所在的月份」：10/02 打開就看 10 月。
+   * 今天早於表上第一個月時停在第一個月，晚於最後一個月時停在最後一個月。 */
+  function todayMonthIndex(months) {
+    if (!months.length) return 0;
+    var now = new Date(), today = now.getFullYear() * 12 + now.getMonth();
+    var best = 0;
+    for (var i = 0; i < months.length; i++) {
+      var v = months[i].year * 12 + (months[i].month - 1);
+      if (!months[i].year || !months[i].month) continue;
+      if (v === today) return i;
+      if (v < today) best = i;
+    }
+    return best;
+  }
+
   function loadSample() {
     state.data = normalize(JSON.parse(JSON.stringify(window.PGY_SAMPLE_DATA || { rows: [] })));
     state.sheets = [];
@@ -1010,6 +1025,7 @@
     if (!(CFG.GAS_WEB_APP_URL || '').trim()) {
       loadSample();
       state.source = 'sample';
+      state.monthIndex = todayMonthIndex(state.data.monthCols);
       render();
       return Promise.resolve();
     }
@@ -1025,7 +1041,10 @@
         state.source = 'error';
         state.error = '無法讀取 Google Sheets：' + (e && e.message ? e.message : e);
       })
-      .then(render);
+      .then(function () {
+        state.monthIndex = todayMonthIndex(state.data.monthCols);
+        render();
+      });
   }
 
   /* ========================= 公告欄（留言板） =========================
