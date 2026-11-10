@@ -1158,7 +1158,9 @@
 
     // 收合時至少顯示所有置頂的那幾則，置頂了卻被折起來就沒有意義
     var pinned = list.filter(function (n) { return n.pin; }).length;
-    var preview = Math.max(Number(CFG.NOTICE_PREVIEW) || 0, pinned, 1);
+    // NOTICE_PREVIEW 填 0（或不填）= 全部列出，不收合
+    var limit = Number(CFG.NOTICE_PREVIEW) || 0;
+    var preview = limit > 0 ? Math.max(limit, pinned, 1) : list.length;
     var shown = board.expanded ? list : list.slice(0, preview);
     var rest = list.length - shown.length;
 
