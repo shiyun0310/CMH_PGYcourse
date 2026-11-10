@@ -331,6 +331,14 @@ table.grid td.q1{border-left:2px solid var(--line)}
 }
 .board-tools{display:flex;gap:8px;flex-wrap:wrap}
 .btn.sm{padding:4px 10px;font-size:12px;border-radius:8px}
+/* index.html（粉色系）的公告欄按鈕：「顯示全部／收合／標記已讀」用粉色字。
+   .btn.ghost 本來是給深色頁首用的白字，放在白色面板上會看不清楚。 */
+body:not(.office):not(.gray) .board-tools .btn.ghost{
+  background:var(--panel);border-color:var(--brand-2);color:var(--brand-2);
+}
+body:not(.office):not(.gray) .board-tools .btn.ghost:hover{
+  background:var(--brand-soft);border-color:var(--brand);color:var(--brand);
+}
 
 .board-list{list-style:none;margin:0;padding:0}
 .board-item{
