@@ -1116,11 +1116,14 @@
       if (m) n.ts = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3] || 1)).getTime();
     });
 
-    // 置頂優先，其次日期新的在前；沒填日期的排最後（ts = 0），順序照試算表
+    // 最新的公告排在最上面：
+    //   置頂優先 → 日期新的在前 → 同一天（或都沒填日期）時，
+    //   試算表裡越下面的列（越晚新增的）越上面。
+    // 沒填日期的排在有日期的後面（ts = 0），彼此之間一樣是新增的在上。
     out.sort(function (a, b) {
       if (a.pin !== b.pin) return a.pin ? -1 : 1;
       if (a.ts !== b.ts) return b.ts - a.ts;
-      return a.seq - b.seq;
+      return b.seq - a.seq;
     });
     return out;
   }
