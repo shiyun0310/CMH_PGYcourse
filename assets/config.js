@@ -51,7 +51,7 @@ window.PGY_CONFIG = {
 
   /* 公告欄一次顯示幾則：0 = 全部列出（index.html 與 office.html 都一樣）。
    * 填數字（例如 3）= 只先顯示前幾則，其餘按「顯示全部」才展開（置頂的一定會顯示） */
-  NOTICE_PREVIEW: 0,
+  NOTICE_PREVIEW: 3,
 
   /* 網頁標題。
    * 留空 = 沿用各頁 HTML 裡 <h1 id="title"> 的文字 ——
