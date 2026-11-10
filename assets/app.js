@@ -1110,10 +1110,15 @@
 
     // 後端讀不出時間戳時（例如日期是手打的文字），前端再試著解析一次，
     // 不然所有公告都會當成「沒填日期」而照試算表的列順序排。
+    // 沒有「日期」欄時，也看看「分類」或「標題」裡有沒有日期
+    // （例如分類填「2026/10/19公告」），一樣能照日期排。
     out.forEach(function (n) {
-      if (n.ts || !n.date) return;
-      var m = n.date.match(/(\d{4})\s*[\/\-.年]\s*(\d{1,2})(?:\s*[\/\-.月]\s*(\d{1,2}))?/);
-      if (m) n.ts = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3] || 1)).getTime();
+      [n.date, n.tag, n.title].some(function (src) {
+        if (n.ts || !src) return !!n.ts;
+        var m = src.match(/(\d{4})\s*[\/\-.年]\s*(\d{1,2})(?:\s*[\/\-.月]\s*(\d{1,2}))?/);
+        if (m) n.ts = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3] || 1)).getTime();
+        return !!n.ts;
+      });
     });
 
     // 最新的公告排在最上面：
